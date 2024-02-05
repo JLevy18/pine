@@ -12,17 +12,12 @@ import ColorOption from './ColorOption';
 
 const Toolbar: React.FC = () => {
 
-
-
+    // Configuration JSON
     const categories = ["Draw", "Format", "Utility", "Settings"];
-
-
-    const toolbarRef = useRef<HTMLDivElement | null>(null);
-    const menuRef = useRef<HTMLDivElement | null>(null);
 
     
     const [brushColor, setBrushColor] = useState("#DB2777");
-
+    
     const options = [
         { category: "Draw", id: "free", icon: <LuPencil />},
         { category: "Draw", id: "shapes", icon: <LuShapes />},
@@ -38,88 +33,58 @@ const Toolbar: React.FC = () => {
     ];
 
 
+    const toolbarRef = useRef<HTMLDivElement | null>(null);
+    const MENU_GAP = 3;
+
     const [disableDrag, setDisableDrag] = useState(false);
+    
+    const [openMenus, setOpenMenus] = useState<React.RefObject<HTMLDivElement>[]>([]);
+    
     const [toolbarDirection, setToolbarDirection] = useState("horizontal");
     const [toolbarPosition, setToolbarPosition] = useState<Position>({x: 0, y: 0});
-
-    const [menuMaxOverflow, setMenuMaxOverflow] = useState<number>(0);
-  
-    const calculateMenuPosition = useCallback((menuRef: React.RefObject<HTMLDivElement>) => {
-        const menuElement = menuRef.current;
-        const toolbarElement = toolbarRef.current;
-        const rightBound = window.innerWidth;
     
-        if (menuElement && toolbarElement) {
+    const updateOpenMenus = (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => {
+        if (isOpen) {
+            setOpenMenus(prev => [...prev, menuRef]);
+        } else {
+            setOpenMenus(prev => prev.filter(ref => ref !== menuRef));
+        }
+    };
 
-            const toolbarRect = toolbarElement.getBoundingClientRect();
-            const toolbarRightEdge = Math.round(toolbarRect.right);
-            const toolbarRemainDrag = (rightBound - toolbarRightEdge);
+    const calculateMenuPositions = useCallback((menuRefs: React.RefObject<HTMLDivElement>[]) => {
+        // Sort the menu references from left to right based on their current position
+        const sortedMenus = menuRefs
+        .filter(ref => ref.current !== null) // Filter out null references
+        .sort((a, b) => {
+            if (!a.current || !b.current) {
+                return 0;
+            }
+            return a.current.getBoundingClientRect().left - b.current.getBoundingClientRect().left;
+        });
 
-            const menuRect = menuElement.getBoundingClientRect();
-            const menuRightEdge = Math.round(menuRect.right);
-            
-            // Menu translation
-            const transform = window.getComputedStyle(menuElement).transform;
-            const transformValues = transform.match(/matrix.*\((.+)\)/);
-            const translateX = transformValues ? parseFloat(transformValues[1].split(', ')[4]) : 0;
-
-            let translation = translateX || 0;
-            let overflowing = (rightBound - menuRightEdge) < 0;
-
-
-
-            // HORIZONTAL COLLISION DETECTION
-            if (overflowing && toolbarRemainDrag >= 0) {
-
-                translation = -(menuMaxOverflow - (rightBound - toolbarRightEdge));
-                menuElement.style.transform = `translateX(${translation}px)`;
-
-                // console.log("Approach",{
-                //     menuMaxOverflow: menuMaxOverflow,
-                //     translation: -(menuMaxOverflow - (rightBound - toolbarRightEdge)),
-                //     toolbarRemainDrag: rightBound - toolbarRightEdge,
-                //     overflowing: overflowing,
-                //     onBoundary: menuOnBoundary
-                // })
-
-            }else if (!overflowing && toolbarRemainDrag <= menuMaxOverflow) {
-                
-                translation = -(menuMaxOverflow - (rightBound - toolbarRightEdge));
-                menuElement.style.transform = `translateX(${translation}px)`;
-
-                // console.log("Leaving",{
-                //     menuMaxOverflow: menuMaxOverflow,
-                //     translation: -(menuMaxOverflow - (rightBound - toolbarRightEdge)),
-                //     toolbarRemainDrag: rightBound - toolbarRightEdge,
-                //     overflowing: overflowing,
-                // })
-            }  
-
-            
-            let gap;
-
-            // Slightly different calculation depending on the state of the menu
-            if (menuElement.style.bottom === ""){
-                gap = (menuRect.top - toolbarRect.bottom);
-            }else{
-                gap = (toolbarRect.top - menuRect.bottom);
+        sortedMenus.forEach((ref, index) => {
+            const currentMenu = ref.current;
+            if (!currentMenu) {
+                return;
             }
 
-            let overflowingY = (toolbarRect.bottom + menuRect.height + gap) > window.innerHeight;
+            // Reset the translateX to 0 for each menu to start calculation from a consistent base
+            currentMenu.style.transform = 'translateX(0px)';
 
-            // VERTICAL COLLISION DETECTION
-            if (overflowingY){
-                //menuElement.style.top = "0%";
-                menuElement.style.bottom = "100%";
-                menuElement.style.removeProperty('top');
-            } else if (!overflowingY) {
-                menuElement.style.top = "100%";
-                menuElement.style.removeProperty('bottom');
+            if (index !== 0) {
+                const previousMenu = sortedMenus[index - 1].current;
+                if (previousMenu) {
+                    // Calculate the overlap offset using getBoundingClientRect
+                    const previousMenuRect = previousMenu.getBoundingClientRect();
+                    const currentMenuRect = currentMenu.getBoundingClientRect();
+                    const overlapOffset = previousMenuRect.right - currentMenuRect.left + 3;
+
+                    // Apply the calculated offset to position the current menu
+                    currentMenu.style.transform = `translateX(${overlapOffset}px)`;
+                }
             }
-
-        
-        } 
-    }, [toolbarPosition, menuMaxOverflow]);
+        });
+    }, []);
 
     const handleDirectionToggle = () => {
         setToolbarDirection(toolbarDirection === "vertical" ? "horizontal" : "vertical");
@@ -133,56 +98,19 @@ const Toolbar: React.FC = () => {
         setDisableDrag(false);
     }
 
-    const handleUpdateMaxOverflow = () => {
-        const menuElement = menuRef.current;
-        const toolbarElement = toolbarRef.current;
-        const rightBound = window.innerWidth;
-
-        if(menuElement && toolbarElement){
-
-            const menuRightEdge = Math.round(menuElement.getBoundingClientRect().right);
-            const toolbarRightEdge = Math.round(toolbarElement.getBoundingClientRect().right);
-            setMenuMaxOverflow((rightBound - toolbarRightEdge) - (rightBound - menuRightEdge));
-        }
-
-        
-        
-    }
-
     const handleDrag = (e: DraggableEvent, data: DraggableData) => {
         setToolbarPosition({x: data.x, y: data.y});
     };
 
-
-    // Thanks GPT
-    const rgbToHex = (r: number, g: number, b: number): string => {
-        const toHex = (c: number): string => {
-            const hex = c.toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        };
-    
-        return "#" + toHex(r) + toHex(g) + toHex(b);
-    };
-
-     // Thanks GPT
-    const convertRGBtoHex = (rgb: string): string => {
-        const result = rgb.match(/\d+/g);
-    
-        if (result) {
-            const r = parseInt(result[0]);
-            const g = parseInt(result[1]);
-            const b = parseInt(result[2]);
-    
-            return rgbToHex(r, g, b);
-        }
-    
-        return ''; // Return an empty string or some default value if parsing fails
-    };
-    
-
     const handleColorSelection = (e: React.MouseEvent<HTMLDivElement>) => {
         setBrushColor(convertRGBtoHex(e.currentTarget.style.backgroundColor))
     }
+
+
+    // Recalculate menu positions when openMenus changes
+    useEffect(() => {
+        calculateMenuPositions(openMenus);
+    }, [openMenus, calculateMenuPositions]);
 
     return(
         <Draggable 
@@ -207,11 +135,7 @@ const Toolbar: React.FC = () => {
                                 toggleDirection={handleDirectionToggle}
                                 onMouseEnter={handleOptionMouseEnter}
                                 onMouseLeave={handleOptionMouseLeave}
-                                
-                                menuRef={menuRef}
-                                calculateMenuPosition={calculateMenuPosition}
-                                updateMaxOverflow={handleUpdateMaxOverflow}
-
+                                updateOpenMenus={updateOpenMenus}
                                 onColorSelection={handleColorSelection}
                             />
                         ))}
@@ -223,3 +147,29 @@ const Toolbar: React.FC = () => {
 };
 
 export default Toolbar;
+
+
+// Thanks GPT
+const rgbToHex = (r: number, g: number, b: number): string => {
+    const toHex = (c: number): string => {
+        const hex = c.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    };
+
+    return "#" + toHex(r) + toHex(g) + toHex(b);
+};
+
+    // Thanks GPT
+const convertRGBtoHex = (rgb: string): string => {
+    const result = rgb.match(/\d+/g);
+
+    if (result) {
+        const r = parseInt(result[0]);
+        const g = parseInt(result[1]);
+        const b = parseInt(result[2]);
+
+        return rgbToHex(r, g, b);
+    }
+
+    return ''; // Return an empty string or some default value if parsing fails
+};

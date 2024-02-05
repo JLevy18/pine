@@ -9,31 +9,31 @@ interface ToolbarOptionProps {
     category: string;
     id: string;
   };
-  menuRef: React.RefObject<HTMLDivElement>;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   toggleDirection: () => void;
-  updateMaxOverflow: () => void;
-  calculateMenuPosition: (menuRef: React.RefObject<HTMLDivElement>) => void;
   onColorSelection: (e: React.MouseEvent<HTMLDivElement>) => void;
+  updateOpenMenus: (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => void;
 }
 
 const ToolbarOption: React.FC<ToolbarOptionProps> = ({ 
   option,
-  menuRef,
   onMouseEnter,
   onMouseLeave, 
   toggleDirection,
-  updateMaxOverflow,
-  calculateMenuPosition,
+  updateOpenMenus,
   onColorSelection
 }) => {
 
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [highlightSelection, setHighlightSelection] = useState(false);
 
   const toggleMenu = () => {
-    setShowMenu(!showMenu);
+ 
+    setShowMenu(prev => !prev);
+    updateOpenMenus(menuRef, !showMenu);
+
     if(option.id !== "settings"){
       setHighlightSelection(false)
     }else if (option.id === "settings" && highlightSelection){
@@ -42,24 +42,6 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
       setHighlightSelection(true)
     }
   } 
-
-  useEffect(() => {
-    if(showMenu){
-      updateMaxOverflow();
-    }
-
-  }, [showMenu]);
-
-
-  useEffect(() => {
-
-    if (showMenu) {
-      calculateMenuPosition(menuRef);
-    }
-
-  }, [showMenu, calculateMenuPosition]);
-
-
 
   return (
     <div 
@@ -74,6 +56,12 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
         <SettingsMenu ref={menuRef} id={`menu-${option.id}`} toggleDirection={toggleDirection} />
       )}
       {showMenu && option.id === "draw-color" && (
+        <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
+      )}
+      {showMenu && option.id === "shapes" && (
+        <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
+      )}
+      {showMenu && option.id === "eraser" && (
         <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
       )}
     </div>

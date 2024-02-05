@@ -82,7 +82,7 @@
     .horizontal .menu-container {
         @apply 
         
-        left-0 my-2.5
+        top-full left-0 my-2.5
     }
 
     .color-option {

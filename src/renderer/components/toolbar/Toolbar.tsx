@@ -19,9 +19,8 @@ const Toolbar: React.FC = () => {
     const [brushColor, setBrushColor] = useState("#DB2777");
     
     const options = [
-        { category: "Draw", id: "free", icon: <LuPencil />},
+        { category: "Draw", id: "mode", icon: <LuPencil />},
         { category: "Draw", id: "shapes", icon: <LuShapes />},
-        { category: "Draw", id: "text-box", icon: <TbSquareLetterT />},
         { category: "Draw", id: "eraser", icon: <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12.133 1.491C13.341.283 15.3.281 16.508 1.491L22.511 7.492C23.719 8.7 23.717 10.66 22.511 11.867L11.869 22.509C10.648 23.73 8.798 23.815 7.469 22.486 7.424 22.441 1.489 16.507 1.489 16.507.281 15.298.281 13.34 1.489 12.131L12.133 1.491V1.491ZM15.414 2.585C14.811 1.981 13.83 1.981 13.227 2.585L6.059 9.752 14.248 17.941 21.415 10.773C22.019 10.168 22.019 9.189 21.415 8.584L15.414 2.583 15.414 2.585ZM13.154 19.034 4.966 10.846 2.585 13.227C1.98 13.832 1.981 14.811 2.585 15.414L8.583 21.412C9.232 22.062 10.125 22.082 10.775 21.415L13.154 19.034Z"/></svg>},
         { category: "Format", id: "draw-color", icon: <ColorSelection hex={brushColor}/>},
         { category: "Utility", id: "undo", icon: <LuUndo2 /> },
@@ -77,10 +76,13 @@ const Toolbar: React.FC = () => {
                     // Calculate the overlap offset using getBoundingClientRect
                     const previousMenuRect = previousMenu.getBoundingClientRect();
                     const currentMenuRect = currentMenu.getBoundingClientRect();
-                    const overlapOffset = previousMenuRect.right - currentMenuRect.left + 3;
+                    const overlapOffset = previousMenuRect.right - currentMenuRect.left + MENU_GAP;
 
                     // Apply the calculated offset to position the current menu
-                    currentMenu.style.transform = `translateX(${overlapOffset}px)`;
+                    // we do not want to apply negative overlap
+                    if (overlapOffset > 0){
+                        currentMenu.style.transform = `translateX(${overlapOffset}px)`;
+                    }
                 }
             }
         });

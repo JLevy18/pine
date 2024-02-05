@@ -1,7 +1,9 @@
 // ToolbarOption.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import ColorMenu from "./menus/ColorMenu";
+import DrawMenu from "./menus/DrawMenu";
 import SettingsMenu from "./menus/SettingsMenu";
+import ShapesMenu from "./menus/ShapesMenu";
 
 interface ToolbarOptionProps {
   option: {
@@ -52,17 +54,17 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
       onClick={toggleMenu}
     >
       {option.icon}
-      {showMenu && option.id === "settings" && (
-        <SettingsMenu ref={menuRef} id={`menu-${option.id}`} toggleDirection={toggleDirection} />
+      {showMenu && option.id === "mode" && (
+        <DrawMenu ref={menuRef} id={option.id}/>
+      )}
+      {showMenu && option.id === "shapes" && (
+        <ShapesMenu ref={menuRef} id={option.id}/>
       )}
       {showMenu && option.id === "draw-color" && (
         <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
       )}
-      {showMenu && option.id === "shapes" && (
-        <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
-      )}
-      {showMenu && option.id === "eraser" && (
-        <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
+      {showMenu && option.id === "settings" && (
+        <SettingsMenu ref={menuRef} id={`menu-${option.id}`} toggleDirection={toggleDirection} />
       )}
     </div>
   );

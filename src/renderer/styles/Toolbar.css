@@ -88,6 +88,8 @@
     .color-option {
         @apply w-4 h-4 rounded-full border border-neutral-500 cursor-pointer
     }
-
-        
+    
+    .shape-option {
+        @apply grid grid-cols-3 gap-2
+    }
 }

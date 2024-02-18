@@ -1,5 +1,5 @@
 // ToolbarOption.tsx
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ColorMenu from "./menus/ColorMenu";
 import DrawMenu from "./menus/DrawMenu";
 import SettingsMenu from "./menus/SettingsMenu";
@@ -16,14 +16,16 @@ interface ToolbarOptionProps {
   toggleDirection: () => void;
   onColorSelection: (e: React.MouseEvent<HTMLDivElement>) => void;
   updateOpenMenus: (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => void;
+  updateMenuOverflow: (menuRef: React.RefObject<HTMLDivElement>) => void;
 }
 
-const ToolbarOption: React.FC<ToolbarOptionProps> = ({ 
+const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   option,
   onMouseEnter,
-  onMouseLeave, 
+  onMouseLeave,
   toggleDirection,
   updateOpenMenus,
+  updateMenuOverflow,
   onColorSelection
 }) => {
 
@@ -31,10 +33,19 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const [highlightSelection, setHighlightSelection] = useState(false);
 
+  const menuIds = ["mode", "shapes", "draw-color", "settings"];
+
+  const hasMenu = (id: string) => {
+    return menuIds.includes(id);
+  };
+
   const toggleMenu = () => {
- 
+
     setShowMenu(prev => !prev);
-    updateOpenMenus(menuRef, !showMenu);
+
+    if (hasMenu(option.id)) {
+      updateOpenMenus(menuRef, !showMenu)
+    }
 
     if(option.id !== "settings"){
       setHighlightSelection(false)
@@ -43,11 +54,17 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
     }else {
       setHighlightSelection(true)
     }
-  } 
+  }
+
+  useEffect(() => {
+    if (showMenu) {
+      updateMenuOverflow(menuRef);
+    }
+  }, [showMenu])
 
   return (
-    <div 
-      id={option.id} 
+    <div
+      id={option.id}
       className={`toolbar-option ${highlightSelection ? "selected" : ""}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

@@ -74,7 +74,7 @@ const createWindow = async () => {
     transparent: true,
     x: 0,
     y: 400,
-    titleBarStyle: 'hidden',
+    titleBarStyle: 'default', // Change to hidden for prod
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
@@ -92,7 +92,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      mainWindow.maximize();
+      //mainWindow.maximize();
       mainWindow.show();
     }
   });

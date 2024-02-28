@@ -7,11 +7,11 @@
     /* Toolbar Base */
     /****************/
     .toolbar {
-        @apply bg-neutral-800 border-neutral-500 border rounded-xl 
-        
-        w-max relative p-0.5 justify-center items-center 
-        
-        
+        @apply bg-neutral-800 border-neutral-500 border rounded-xl
+
+        w-max relative p-0.5 justify-center items-center
+
+
     }
 
         /* Direction Horizontal */
@@ -26,7 +26,7 @@
         }
 
         /* Direction Vertical */
-        
+
         .toolbar.vertical {
             @apply flex flex-col
         }
@@ -35,9 +35,9 @@
             @apply w-6 h-[0.05rem] bg-neutral-500 mx-auto my-1
         }
 
-    /*******************/    
+    /*******************/
     /* Toolbar Options */
-    /*******************/    
+    /*******************/
     .toolbar-option {
         @apply relative flex justify-center items-center rounded-lg transition-colors ease-in-out
 
@@ -54,7 +54,7 @@
 
 
     .toolbar-option svg {
-        @apply w-5 h-5 text-white opacity-80
+        @apply text-white opacity-80
     }
 
         .toolbar-option#hide {
@@ -64,7 +64,7 @@
         .toolbar-option#hide:hover {
             @apply bg-red-800
         }
-    
+
     /* Toolbar Menus */
 
     .menu-container {
@@ -72,24 +72,43 @@
 
         absolute flex flex-col p-1 min-w-max
     }
-    
+
     .vertical .menu-container {
         @apply
-        
+
         top-0 left-full mx-2.5
     }
 
     .horizontal .menu-container {
-        @apply 
-        
+        @apply
+
         top-full left-0 my-2.5
     }
 
     .color-option {
         @apply w-4 h-4 rounded-full border border-neutral-500 cursor-pointer
     }
-    
+
     .shape-option {
         @apply grid grid-cols-3 gap-2
     }
+
+    .draw-mode-container {
+        @apply flex m-1 justify-evenly items-center
+    }
+
+    .draw-size-container {
+        @apply flex justify-evenly items-center m-1
+    }
+
+    .draw-size {
+        @apply w-6 h-6 grid items-center justify-center
+    }
+
+    .draw-mode {
+        @apply mx-1 w-5 h-5
+    }
+
+
+
 }

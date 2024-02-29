@@ -13,6 +13,7 @@ interface ToolbarOptionProps {
   };
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onAddRectangle: () => void;
   toggleDirection: () => void;
   onColorSelection: (e: React.MouseEvent<HTMLDivElement>) => void;
   updateOpenMenus: (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => void;
@@ -23,6 +24,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   option,
   onMouseEnter,
   onMouseLeave,
+  onAddRectangle,
   toggleDirection,
   updateOpenMenus,
   updateMenuOverflow,
@@ -75,7 +77,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
         <DrawMenu ref={menuRef} id={option.id}/>
       )}
       {showMenu && option.id === "shapes" && (
-        <ShapesMenu ref={menuRef} id={option.id}/>
+        <ShapesMenu ref={menuRef} id={option.id} onAddRectangle={onAddRectangle}/>
       )}
       {showMenu && option.id === "draw-color" && (
         <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>

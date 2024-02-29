@@ -93,6 +93,7 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       //mainWindow.maximize();
+      mainWindow.setResizable(false);
       mainWindow.show();
     }
   });

@@ -14,8 +14,11 @@ interface Option {
   icon: JSX.Element | null;
 }
 
+interface ToolbarProps {
+  onAddRectangle: () => void;
+}
 
-const Toolbar: React.FC = () => {
+const Toolbar: React.FC<ToolbarProps> = ({onAddRectangle}) => {
 
   // Configuration JSON
   const categories = ["Draw", "Format", "Utility", "Settings"];
@@ -98,24 +101,26 @@ const Toolbar: React.FC = () => {
               let currentTransform = getXTranslation(menuElement);
               translation = translation + currentTransform;
               menuElement.style.transform = `translateX(${translation}px)`;
+
             } else if (prevMenuElement) {
               let menuRightEdge = menuElement.getBoundingClientRect().right;
               let prevMenuLeftEdge = prevMenuElement.getBoundingClientRect().left;
               let currentTransform = getXTranslation(menuElement);
 
               if (menuRightEdge + MENU_GAP > prevMenuLeftEdge) {
-                console.log(-((menuRightEdge + MENU_GAP) - prevMenuLeftEdge))
                 menuElement.style.transform = `translateX(${currentTransform - ((menuRightEdge + MENU_GAP) - prevMenuLeftEdge)}px)`;
               }
+
+
             }
           }
         }
+
       }
     }
   }
 
   const calculateMenuPositions = useCallback((menuRefs: React.RefObject<HTMLDivElement>[]) => {
-    console.log("test")
     for (let i = 0; i < menuRefs.length; i++) {
 
       let menuElement = menuRefs[i].current;
@@ -212,6 +217,7 @@ const Toolbar: React.FC = () => {
                   updateOpenMenus={updateOpenMenus}
                   updateMenuOverflow={updateMenuOverflow}
                   onColorSelection={handleColorSelection}
+                  onAddRectangle={onAddRectangle}
                 />
               ))}
           </React.Fragment>

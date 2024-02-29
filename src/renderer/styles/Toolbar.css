@@ -9,7 +9,7 @@
     .toolbar {
         @apply bg-neutral-800 border-neutral-500 border rounded-xl
 
-        w-max relative p-0.5 justify-center items-center
+        w-max relative p-0.5 justify-center items-center z-40
 
 
     }

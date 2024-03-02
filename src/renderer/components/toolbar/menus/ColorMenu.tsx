@@ -10,8 +10,8 @@ interface ColorMenuProps {
 const ColorMenu = forwardRef<HTMLDivElement, ColorMenuProps>(({ id, onColorSelection }, ref) => {
 
     return (
-      <div id={id} 
-          className="menu-container" 
+      <div id={id}
+          className="menu-container"
           onClick={(e) => {e.stopPropagation()}}
           ref={ref}
       >
@@ -26,7 +26,7 @@ const ColorMenu = forwardRef<HTMLDivElement, ColorMenuProps>(({ id, onColorSelec
           <ColorOption onColorSelection={onColorSelection} hex="#FFFFFF"/>
           <ColorOption onColorSelection={onColorSelection} hex="#000000"/>
         </div>
-        
+
       </div>
     );
   }

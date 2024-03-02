@@ -4,10 +4,10 @@ import { LuCircle, LuSquare, LuTriangle } from "react-icons/lu";
 
 interface ShapesMenuProps {
   id: string;
-  onAddRectangle: () => void;
+  onMenuAction: (actionType: string) => void;
 }
 
-const ShapesMenu = forwardRef<HTMLDivElement, ShapesMenuProps>(({ id, onAddRectangle }, ref) => {
+const ShapesMenu = forwardRef<HTMLDivElement, ShapesMenuProps>(({ id, onMenuAction }, ref) => {
 
     return (
       <div id={id}
@@ -16,9 +16,9 @@ const ShapesMenu = forwardRef<HTMLDivElement, ShapesMenuProps>(({ id, onAddRecta
           ref={ref}
       >
         <div className="shape-option hover:cursor-pointer">
-            <LuSquare size={20} onClick={onAddRectangle}/>
-            <LuCircle size={20}/>
-            <LuTriangle size={20}/>
+            <LuSquare size={20} onClick={() => onMenuAction('addRectangle')}/>
+            <LuCircle size={20} onClick={() => onMenuAction('addCircle')}/>
+            <LuTriangle size={20} onClick={() => onMenuAction('addTriangle')}/>
         </div>
       </div>
     );

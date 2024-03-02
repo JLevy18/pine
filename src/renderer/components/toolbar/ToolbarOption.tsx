@@ -13,7 +13,7 @@ interface ToolbarOptionProps {
   };
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-  onAddRectangle: () => void;
+  onMenuAction: (actionType: string, ...args: any[]) => void;
   toggleDirection: () => void;
   onColorSelection: (e: React.MouseEvent<HTMLDivElement>) => void;
   updateOpenMenus: (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => void;
@@ -24,7 +24,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   option,
   onMouseEnter,
   onMouseLeave,
-  onAddRectangle,
+  onMenuAction,
   toggleDirection,
   updateOpenMenus,
   updateMenuOverflow,
@@ -56,7 +56,18 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
     }else {
       setHighlightSelection(true)
     }
+
+    if(option.id === "clear"){
+      onMenuAction("clearCanvas");
+    } else if (option.id === "eraser") {
+      onMenuAction("setDrawMode", option.id)
+    }
   }
+
+  const handleColorSelection = (e: React.MouseEvent<HTMLDivElement>) => {
+        toggleMenu();
+        onColorSelection(e);
+    };
 
   useEffect(() => {
     if (showMenu) {
@@ -74,13 +85,13 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
     >
       {option.icon}
       {showMenu && option.id === "mode" && (
-        <DrawMenu ref={menuRef} id={option.id}/>
+        <DrawMenu ref={menuRef} id={option.id} onMenuAction={onMenuAction}/>
       )}
       {showMenu && option.id === "shapes" && (
-        <ShapesMenu ref={menuRef} id={option.id} onAddRectangle={onAddRectangle}/>
+        <ShapesMenu ref={menuRef} id={option.id} onMenuAction={onMenuAction}/>
       )}
       {showMenu && option.id === "draw-color" && (
-        <ColorMenu ref={menuRef} id={option.id} onColorSelection={onColorSelection}/>
+        <ColorMenu ref={menuRef} id={option.id} onColorSelection={handleColorSelection} />
       )}
       {showMenu && option.id === "settings" && (
         <SettingsMenu ref={menuRef} id={`menu-${option.id}`} toggleDirection={toggleDirection} />

@@ -102,11 +102,11 @@
     }
 
     .draw-size {
-        @apply w-6 h-6 grid items-center justify-center
+        @apply w-6 h-6 grid items-center justify-center hover:cursor-pointer
     }
 
     .draw-mode {
-        @apply mx-1 w-5 h-5
+        @apply mx-1 w-5 h-5 hover:cursor-pointer
     }
 
 

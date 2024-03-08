@@ -4,9 +4,12 @@ import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 import ToolbarOption from './ToolbarOption';
 
 import { LuX, LuSettings, LuTrash2, LuPencil, LuUndo2, LuRedo2, LuSave, LuShapes } from 'react-icons/lu';
-import { Position } from '../types';
 import ColorSelection from './ColorSelection';
 
+type Position = {
+  x: number;
+  y: number;
+}
 
 interface Option {
   category: string;
@@ -182,12 +185,12 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
   };
 
   const handleColorSelection = (e: React.MouseEvent<HTMLDivElement>) => {
-    setBrushColor(convertRGBtoHex(e.currentTarget.style.backgroundColor))
+    setBrushColor(e.currentTarget.style.backgroundColor)
 
     if (drawMode === 'highlight') {
-      onMenuAction('setBrushColor', convertHexToOpacity(convertRGBtoHex(e.currentTarget.style.backgroundColor), 80))
+      onMenuAction('setBrushColor', e.currentTarget.style.backgroundColor);
     } else {
-      onMenuAction('setBrushColor', convertRGBtoHex(e.currentTarget.style.backgroundColor))
+      onMenuAction('setBrushColor', e.currentTarget.style.backgroundColor)
     }
   }
 
@@ -243,41 +246,4 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
 export default Toolbar;
 
 
-// Thanks GPT
-const rgbToHex = (r: number, g: number, b: number): string => {
-  const toHex = (c: number): string => {
-    const hex = c.toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  };
 
-  return "#" + toHex(r) + toHex(g) + toHex(b);
-};
-
-// Thanks GPT
-const convertRGBtoHex = (rgb: string): string => {
-  const result = rgb.match(/\d+/g);
-
-  if (result) {
-    const r = parseInt(result[0]);
-    const g = parseInt(result[1]);
-    const b = parseInt(result[2]);
-
-    return rgbToHex(r, g, b);
-  }
-
-  return ''; // Return an empty string or some default value if parsing fails
-};
-
-function convertHexToOpacity(hexColor: string, opacityPercentage: number): string {
-  if (!/^#[0-9A-Fa-f]{6}$/.test(hexColor)) {
-    throw new Error('Invalid hex color code');
-  }
-  if (opacityPercentage < 0 || opacityPercentage > 100) {
-    throw new Error('Opacity percentage must be between 0 and 100');
-  }
-
-  // Convert opacity percentage to decimal, then to a 0-255 scale, and finally to hexadecimal
-  const opacityHex = Math.round(opacityPercentage / 100 * 255).toString(16).padStart(2, '0').toUpperCase();
-
-  return hexColor.toUpperCase() + opacityHex;
-}

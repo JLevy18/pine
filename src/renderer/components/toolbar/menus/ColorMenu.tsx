@@ -4,10 +4,10 @@ import ColorOption from "../ColorOption";
 
 interface ColorMenuProps {
   id: string;
-  onColorSelection: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onMenuAction: (actionType: string, ...args: any[]) => void;
 }
 
-const ColorMenu = forwardRef<HTMLDivElement, ColorMenuProps>(({ id, onColorSelection }, ref) => {
+const ColorMenu = forwardRef<HTMLDivElement, ColorMenuProps>(({ id, onMenuAction }, ref) => {
 
     return (
       <div id={id}
@@ -16,15 +16,15 @@ const ColorMenu = forwardRef<HTMLDivElement, ColorMenuProps>(({ id, onColorSelec
           ref={ref}
       >
         <div className="color-presets grid grid-cols-6 gap-2 m-1">
-          <ColorOption onColorSelection={onColorSelection} hex="#DC2626"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#EA580C"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#CA8A04"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#16A34A"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#2563EB"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#9333EA"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#DB2777"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#FFFFFF"/>
-          <ColorOption onColorSelection={onColorSelection} hex="#000000"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#DC2626"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#EA580C"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#CA8A04"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#16A34A"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#2563EB"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#9333EA"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#DB2777"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#FFFFFF"/>
+          <ColorOption onMenuAction={onMenuAction} hex="#000000"/>
         </div>
 
       </div>

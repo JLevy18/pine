@@ -7,7 +7,7 @@ interface ColorSelectionProps {
 }
 
 
-const ColorSelection: React.FC<ColorSelectionProps> = ({ 
+const ColorSelection: React.FC<ColorSelectionProps> = ({
     hex
 }) => {
 

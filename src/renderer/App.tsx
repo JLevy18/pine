@@ -6,17 +6,6 @@ import React, { useState } from 'react';
 import Toolbar from './components/toolbar/Toolbar';
 import { EventName } from 'fabric/fabric-impl';
 
-type Listeners = {
-  'mouse:down': (e: fabric.IEvent) => void;
-  'mouse:move': (e: fabric.IEvent) => void;
-  'mouse:up': (e: fabric.IEvent) => void;
-}
-
-type BrushState = {
-  mode: string;
-  listeners?: { [key: string]: (event: fabric.IEvent) => void };
-}
-
 interface ActionHandler {
   (editor: FabricJSEditor | undefined, ...args: any[]): void;
 }
@@ -43,7 +32,7 @@ function updateAlpha(rgba: string, newAlpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${clampedAlpha})`;
 }
 
-const HIGHLIGHT_OPACITY = 0.75;
+const HIGHLIGHT_OPACITY = 0.6;
 
 const App: React.FC = () => {
 

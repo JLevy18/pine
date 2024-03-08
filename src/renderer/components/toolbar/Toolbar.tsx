@@ -1,21 +1,11 @@
-import '../../styles/Toolbar.css';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import '../../styles/Toolbar.css';
 import ToolbarOption from './ToolbarOption';
-
-import { LuX, LuSettings, LuTrash2, LuPencil, LuUndo2, LuRedo2, LuSave, LuShapes } from 'react-icons/lu';
+import { Category } from '../../enums'
+import { LuPencil, LuRedo2, LuSave, LuSettings, LuShapes, LuTrash2, LuUndo2, LuX } from 'react-icons/lu';
 import ColorSelection from './ColorSelection';
 
-type Position = {
-  x: number;
-  y: number;
-}
-
-interface Option {
-  category: string;
-  id: string;
-  icon: JSX.Element | null;
-}
 
 interface ToolbarProps {
   onMenuAction: (actionType: string, ...args: any[]) => void;
@@ -26,21 +16,18 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
   // Configuration JSON
   const categories = ["Draw", "Format", "Utility", "Settings"];
 
-  const [drawMode, setDrawMode] = useState('free');
-  const [brushColor, setBrushColor] = useState("#DB2777");
-
-  const options: Option[] = [
-    { category: "Draw", id: "mode", icon: <LuPencil size={20} /> },
-    { category: "Draw", id: "shapes", icon: <LuShapes size={20} /> },
-    { category: "Draw", id: "eraser", icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.133 1.491C13.341.283 15.3.281 16.508 1.491L22.511 7.492C23.719 8.7 23.717 10.66 22.511 11.867L11.869 22.509C10.648 23.73 8.798 23.815 7.469 22.486 7.424 22.441 1.489 16.507 1.489 16.507.281 15.298.281 13.34 1.489 12.131L12.133 1.491V1.491ZM15.414 2.585C14.811 1.981 13.83 1.981 13.227 2.585L6.059 9.752 14.248 17.941 21.415 10.773C22.019 10.168 22.019 9.189 21.415 8.584L15.414 2.583 15.414 2.585ZM13.154 19.034 4.966 10.846 2.585 13.227C1.98 13.832 1.981 14.811 2.585 15.414L8.583 21.412C9.232 22.062 10.125 22.082 10.775 21.415L13.154 19.034Z" /></svg> },
-    { category: "Format", id: "draw-color", icon: <ColorSelection hex={brushColor} /> },
-    { category: "Utility", id: "undo", icon: <LuUndo2 size={20} /> },
-    { category: "Utility", id: "redo", icon: <LuRedo2 size={20} /> },
-    { category: "Utility", id: "clear", icon: <LuTrash2 size={20} /> },
-    { category: "Utility", id: "save", icon: <LuSave size={20} /> },
-    { category: "Settings", id: "settings", icon: <LuSettings size={20} /> },
-    { category: "Settings", id: "hide", icon: <LuX size={20} /> },
-  ];
+  const [options, setOptions] = useState<Array<Option>>([
+    { id: "mode", category: Category.DRAW, selected: true, icon: <LuPencil size={20} /> },
+    { id: "shapes", category: Category.DRAW, selected: false, icon: <LuShapes size={20} /> },
+    { id: "eraser", category: Category.DRAW, selected: false, icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.133 1.491C13.341.283 15.3.281 16.508 1.491L22.511 7.492C23.719 8.7 23.717 10.66 22.511 11.867L11.869 22.509C10.648 23.73 8.798 23.815 7.469 22.486 7.424 22.441 1.489 16.507 1.489 16.507.281 15.298.281 13.34 1.489 12.131L12.133 1.491V1.491ZM15.414 2.585C14.811 1.981 13.83 1.981 13.227 2.585L6.059 9.752 14.248 17.941 21.415 10.773C22.019 10.168 22.019 9.189 21.415 8.584L15.414 2.583 15.414 2.585ZM13.154 19.034 4.966 10.846 2.585 13.227C1.98 13.832 1.981 14.811 2.585 15.414L8.583 21.412C9.232 22.062 10.125 22.082 10.775 21.415L13.154 19.034Z" /></svg> },
+    { id: "draw-color", category: Category.FORMAT, selected: false, icon: <ColorSelection hex="#DB2777" /> },
+    { id: "undo", category: Category.UTILITY, selected: false, icon: <LuUndo2 size={20} /> },
+    { id: "redo", category: Category.UTILITY, selected: false, icon: <LuRedo2 size={20} /> },
+    { id: "clear", category: Category.UTILITY,  selected: false, icon: <LuTrash2 size={20} /> },
+    { id: "save", category: Category.UTILITY, selected: false, icon: <LuSave size={20} /> },
+    { id: "settings", category: Category.SETTINGS, selected: false, icon: <LuSettings size={20} /> },
+    { id: "hide", category: Category.SETTINGS, selected: false, icon: <LuX size={20} /> },
+  ]);
 
 
   const toolbarRef = useRef<HTMLDivElement | null>(null);
@@ -184,21 +171,35 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
     setToolbarPosition({ x: data.x, y: data.y });
   };
 
-  const handleColorSelection = (e: React.MouseEvent<HTMLDivElement>) => {
-    setBrushColor(e.currentTarget.style.backgroundColor)
-
-    if (drawMode === 'highlight') {
-      onMenuAction('setBrushColor', e.currentTarget.style.backgroundColor);
-    } else {
-      onMenuAction('setBrushColor', e.currentTarget.style.backgroundColor)
+  const handleOnMenuAction = (actionType: string, ...args: any[]) => {
+    onMenuAction(actionType, args[0])
+    if (actionType === 'setBrushColor') {
+      options.forEach( option => {
+        if (option.id === 'draw-color' && args[0]){
+          option.icon = <ColorSelection hex={args[0]} />
+        }
+      })
     }
   }
 
-  const handleOnMenuAction = (actionType: string, ...args: any[]) => {
-    onMenuAction(actionType, args[0])
-    if (actionType === 'setDrawMode') {
-      setDrawMode(args[0]);
-    }
+  const handleOptionClick = (e: React.MouseEvent<HTMLDivElement>, clickedOption: Option) => {
+    options.forEach( option => {
+      if (option.category === clickedOption.category) {
+        if (option.id === clickedOption.id) {
+          option.selected = true;
+          option.className = "selected";
+
+          if (option.id === "draw-color"){
+            option.className = "";
+            option.selected = !option.selected
+          }
+        } else {
+          option.selected = false;
+          option.className = "";
+        }
+      }
+    })
+
   }
 
   // Recalculate menu positions when openMenus changes
@@ -226,13 +227,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
               .map((option) => (
                 <ToolbarOption
                   key={option.id}
+
                   option={option}
+                  onClick={handleOptionClick}
                   toggleDirection={handleDirectionToggle}
                   onMouseEnter={handleOptionMouseEnter}
                   onMouseLeave={handleOptionMouseLeave}
                   updateOpenMenus={updateOpenMenus}
                   updateMenuOverflow={updateMenuOverflow}
-                  onColorSelection={handleColorSelection}
                   onMenuAction={handleOnMenuAction}
                 />
               ))}

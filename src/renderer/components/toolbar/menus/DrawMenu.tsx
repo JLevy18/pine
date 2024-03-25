@@ -29,8 +29,6 @@ const DrawMenu = forwardRef<HTMLDivElement, DrawMenuProps>(({ id, onMenuAction }
   }
 
 
-
-
   return (
     <div id={id}
         className="menu-container"

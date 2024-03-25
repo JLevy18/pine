@@ -4,7 +4,6 @@ import { fabric } from 'fabric';
 import { FabricJSCanvas, FabricJSEditor, useFabricJSEditor } from 'fabricjs-react';
 import React, { useState } from 'react';
 import Toolbar from './components/toolbar/Toolbar';
-import { EventName } from 'fabric/fabric-impl';
 
 interface ActionHandler {
   (editor: FabricJSEditor | undefined, ...args: any[]): void;

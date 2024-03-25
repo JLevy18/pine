@@ -10,7 +10,6 @@ interface ToolbarOptionProps {
   option: Option
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-  onClick: (e: React.MouseEvent<HTMLDivElement>, option: Option) => void;
   onMenuAction: (actionType: string, ...args: any[]) => void;
   toggleDirection: () => void;
   updateOpenMenus: (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => void;
@@ -21,7 +20,6 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   option,
   onMouseEnter,
   onMouseLeave,
-  onClick,
   onMenuAction,
   toggleDirection,
   updateOpenMenus,
@@ -38,7 +36,6 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   };
 
   const toggleMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    onClick(e,option)
     setShowMenu(prev => !prev);
 
     if (hasMenu(option.id)) {
@@ -54,13 +51,6 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
         break;
       default:
         break;
-    }
-  }
-
-  const handleMenuAction = (actionType: string, e?: React.MouseEvent<HTMLDivElement>, ...args: any[]) => {
-    onMenuAction(actionType, args[0]);
-    if (e) {
-      toggleMenu(e)
     }
   }
 
@@ -86,7 +76,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
         <ShapesMenu ref={menuRef} id={option.id} onMenuAction={onMenuAction} />
       )}
       {showMenu && option.id === "draw-color" && (
-        <ColorMenu ref={menuRef} id={option.id} onMenuAction={handleMenuAction} />
+        <ColorMenu ref={menuRef} id={option.id} onMenuAction={onMenuAction} />
       )}
       {showMenu && option.id === "settings" && (
         <SettingsMenu ref={menuRef} id={`menu-${option.id}`} toggleDirection={toggleDirection} />

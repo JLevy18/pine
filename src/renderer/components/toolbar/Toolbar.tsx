@@ -182,26 +182,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
     }
   }
 
-  const handleOptionClick = (e: React.MouseEvent<HTMLDivElement>, clickedOption: Option) => {
-    options.forEach( option => {
-      if (option.category === clickedOption.category) {
-        if (option.id === clickedOption.id) {
-          option.selected = true;
-          option.className = "selected";
-
-          if (option.id === "draw-color"){
-            option.className = "";
-            option.selected = !option.selected
-          }
-        } else {
-          option.selected = false;
-          option.className = "";
-        }
-      }
-    })
-
-  }
-
   // Recalculate menu positions when openMenus changes
   useEffect(() => {
     calculateMenuPositions(sortMenuRefs(openMenus));
@@ -229,7 +209,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
                   key={option.id}
 
                   option={option}
-                  onClick={handleOptionClick}
                   toggleDirection={handleDirectionToggle}
                   onMouseEnter={handleOptionMouseEnter}
                   onMouseLeave={handleOptionMouseLeave}

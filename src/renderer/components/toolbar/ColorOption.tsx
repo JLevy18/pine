@@ -3,7 +3,7 @@ import React from "react";
 
 interface ColorOptionProps {
     hex: string;
-    onMenuAction?: (actionType: string, e?: React.MouseEvent<HTMLDivElement>, ...args: any[]) => void;
+    onMenuAction: (actionType: string, ...args: any[]) => void;
   }
 
 
@@ -14,7 +14,7 @@ const ColorSelection: React.FC<ColorOptionProps> = ({
 
 const handleMenuAction = (e: React.MouseEvent<HTMLDivElement>) => {
   if (onMenuAction){
-    onMenuAction("setBrushColor", e, e.currentTarget.style.backgroundColor);
+    onMenuAction("setBrushColor", e.currentTarget.style.backgroundColor);
   }
 }
 

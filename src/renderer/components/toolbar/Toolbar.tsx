@@ -16,7 +16,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
   // Configuration JSON
   const categories = ["Draw", "Format", "Utility", "Settings"];
 
-  const [options, setOptions] = useState<Array<Option>>([
+  const [selectedOptions, setSelectedOptions] = useState<{ [key in Category]?: string }>({
+    [Category.DRAW]: 'mode'
+  });
+  const options = [
     { id: "mode", category: Category.DRAW, selected: true, icon: <LuPencil size={20} /> },
     { id: "shapes", category: Category.DRAW, selected: false, icon: <LuShapes size={20} /> },
     { id: "eraser", category: Category.DRAW, selected: false, icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.133 1.491C13.341.283 15.3.281 16.508 1.491L22.511 7.492C23.719 8.7 23.717 10.66 22.511 11.867L11.869 22.509C10.648 23.73 8.798 23.815 7.469 22.486 7.424 22.441 1.489 16.507 1.489 16.507.281 15.298.281 13.34 1.489 12.131L12.133 1.491V1.491ZM15.414 2.585C14.811 1.981 13.83 1.981 13.227 2.585L6.059 9.752 14.248 17.941 21.415 10.773C22.019 10.168 22.019 9.189 21.415 8.584L15.414 2.583 15.414 2.585ZM13.154 19.034 4.966 10.846 2.585 13.227C1.98 13.832 1.981 14.811 2.585 15.414L8.583 21.412C9.232 22.062 10.125 22.082 10.775 21.415L13.154 19.034Z" /></svg> },
@@ -27,7 +30,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
     { id: "save", category: Category.UTILITY, selected: false, icon: <LuSave size={20} /> },
     { id: "settings", category: Category.SETTINGS, selected: false, icon: <LuSettings size={20} /> },
     { id: "hide", category: Category.SETTINGS, selected: false, icon: <LuX size={20} /> },
-  ]);
+  ];
 
 
   const toolbarRef = useRef<HTMLDivElement | null>(null);
@@ -101,12 +104,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
               if (menuRightEdge + MENU_GAP > prevMenuLeftEdge) {
                 menuElement.style.transform = `translateX(${currentTransform - ((menuRightEdge + MENU_GAP) - prevMenuLeftEdge)}px)`;
               }
-
-
             }
           }
         }
-
       }
     }
   }
@@ -188,6 +188,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
     fitToBounds(sortMenuRefs(openMenus));
   }, [toolbarPosition, openMenus, menuOverflow]);
 
+  const handleOptionClick = (clickedOption: Option) => {
+    const isSelected = selectedOptions[clickedOption.category] === clickedOption.id;
+    setSelectedOptions(prev => ({
+      ...prev,
+      [clickedOption.category]: isSelected ? undefined : clickedOption.id
+    }));
+  }
+
   return (
     <Draggable
       bounds="parent"
@@ -203,20 +211,23 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
             {categoryIndex > 0 && <div className="separator" />}
             {options
               .filter((option) => option.category === category)
-              //.sort((a, b) => (a.order || 0) - (b.order || 0))
-              .map((option) => (
-                <ToolbarOption
-                  key={option.id}
+              .map((option) => {
 
-                  option={option}
-                  toggleDirection={handleDirectionToggle}
-                  onMouseEnter={handleOptionMouseEnter}
-                  onMouseLeave={handleOptionMouseLeave}
-                  updateOpenMenus={updateOpenMenus}
-                  updateMenuOverflow={updateMenuOverflow}
-                  onMenuAction={handleOnMenuAction}
-                />
-              ))}
+                return (
+                  <ToolbarOption
+                    key={option.id}
+                    option={option}
+                    selected={selectedOptions[option.category] === option.id}
+                    onClick={() => handleOptionClick(option)}
+                    onMouseEnter={handleOptionMouseEnter}
+                    onMouseLeave={handleOptionMouseLeave}
+                    onMenuAction={handleOnMenuAction}
+                    updateOpenMenus={updateOpenMenus}
+                    updateMenuOverflow={updateMenuOverflow}
+                    toggleDirection={handleDirectionToggle}
+                  />
+                )
+              })}
           </React.Fragment>
         ))}
       </div>

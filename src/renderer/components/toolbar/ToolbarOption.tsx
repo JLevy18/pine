@@ -4,10 +4,13 @@ import ColorMenu from "./menus/ColorMenu";
 import DrawMenu from "./menus/DrawMenu";
 import SettingsMenu from "./menus/SettingsMenu";
 import ShapesMenu from "./menus/ShapesMenu";
+import { Category } from '../../enums'
 
 
 interface ToolbarOptionProps {
   option: Option
+  selected: boolean
+  onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onMenuAction: (actionType: string, ...args: any[]) => void;
@@ -18,6 +21,8 @@ interface ToolbarOptionProps {
 
 const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   option,
+  selected,
+  onClick,
   onMouseEnter,
   onMouseLeave,
   onMenuAction,
@@ -30,12 +35,12 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const menuIds = ["mode", "shapes", "draw-color", "settings"];
-
   const hasMenu = (id: string) => {
     return menuIds.includes(id);
   };
 
-  const toggleMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+  const toggleMenu = () => {
+    onClick();
     setShowMenu(prev => !prev);
 
     if (hasMenu(option.id)) {
@@ -60,10 +65,19 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
     }
   }, [showMenu])
 
+  useEffect(() => {
+    if (!selected && showMenu && menuRef.current) {
+      setShowMenu(false);
+      updateOpenMenus(menuRef, false);
+    }
+  }, [selected, showMenu, menuRef, setShowMenu, updateOpenMenus]);
+
+  const isSelected = selected && option.category !== Category.FORMAT && option.category !== Category.UTILITY;
+
   return (
     <div
       id={option.id}
-      className={`toolbar-option ${option.className}`}
+      className={`toolbar-option ${isSelected ? "selected" : ""}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={toggleMenu}

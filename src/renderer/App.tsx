@@ -71,6 +71,7 @@ const App: React.FC = () => {
           Object.keys(activeBrush.listeners).forEach(eventType => canvas.off(eventType, activeBrush.listeners![eventType]));
         }
         canvas.isDrawingMode = true;
+        canvas.selection = true;
         canvas.freeDrawingBrush.width = strokeWidth;
         canvas.freeDrawingBrush.color = brushColor;
         canvas.freeDrawingBrush.strokeLineCap = "round";
@@ -92,7 +93,8 @@ const App: React.FC = () => {
           let objectsToRemove: Array<fabric.Object> = [];
           canvas.isDrawingMode = false;
           canvas.selection = false;
-
+          canvas.discardActiveObject();
+          canvas.renderAll();
           const listeners = {
             'mouse:down': (e: fabric.IEvent) => {
               isErasing = true;

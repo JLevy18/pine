@@ -190,6 +190,11 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
 
   const handleOptionClick = (clickedOption: Option) => {
     const isSelected = selectedOptions[clickedOption.category] === clickedOption.id;
+    const currentlySelected = selectedOptions[clickedOption.category];
+    // If the clicked option is already selected and belongs to the DRAW category, return early
+    if (currentlySelected === clickedOption.id && clickedOption.category === Category.DRAW) {
+      return;
+    }
     setSelectedOptions(prev => ({
       ...prev,
       [clickedOption.category]: isSelected ? undefined : clickedOption.id

@@ -75,6 +75,11 @@ const App: React.FC = () => {
         canvas.freeDrawingBrush.width = strokeWidth;
         canvas.freeDrawingBrush.color = brushColor;
         canvas.freeDrawingBrush.strokeLineCap = "round";
+        canvas.hoverCursor = "move"
+        canvas.getObjects().forEach(obj => {
+          obj.selectable = true;
+        });
+        canvas.renderAll();
       }
 
       // Toggle selected draw mode
@@ -93,7 +98,11 @@ const App: React.FC = () => {
           let objectsToRemove: Array<fabric.Object> = [];
           canvas.isDrawingMode = false;
           canvas.selection = false;
+          canvas.hoverCursor = "default"
           canvas.discardActiveObject();
+          canvas.getObjects().forEach(obj => {
+            obj.selectable = false;
+          });
           canvas.renderAll();
           const listeners = {
             'mouse:down': (e: fabric.IEvent) => {

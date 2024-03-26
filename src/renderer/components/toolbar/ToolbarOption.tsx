@@ -41,11 +41,16 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
 
   const toggleMenu = () => {
     onClick();
-    setShowMenu(prev => !prev);
 
-    if (hasMenu(option.id)) {
-      updateOpenMenus(menuRef, !showMenu)
+    if (option.category !== Category.DRAW || (option.category === Category.DRAW && selected)) {
+      setShowMenu(prev => !prev);
+
+      if (hasMenu(option.id)) {
+        updateOpenMenus(menuRef, !showMenu)
+      }
     }
+
+
 
     switch (option.id) {
       case "clear":

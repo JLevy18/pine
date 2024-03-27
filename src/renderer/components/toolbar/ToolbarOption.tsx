@@ -1,7 +1,6 @@
 // ToolbarOption.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { Category } from '../../enums';
-import ColorSelection from "./ColorSelection";
 import ColorMenu from "./menus/ColorMenu";
 import DrawMenu from "./menus/DrawMenu";
 import SettingsMenu from "./menus/SettingsMenu";
@@ -68,6 +67,14 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
     }
   }
 
+  const handleMenuAction = (actionType: string, ...args: any[]) => {
+    onMenuAction(actionType, args[0]);
+    setShowMenu(prev => !prev);
+    if (hasMenu(option.id)) {
+      updateOpenMenus(menuRef, !showMenu)
+    }
+  }
+
   useEffect(() => {
     if (showMenu) {
       updateMenuOverflow(menuRef);
@@ -93,7 +100,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
     >
       {option.icon}
       {showMenu && option.id === "mode" && (
-        <DrawMenu ref={menuRef} id={option.id} onMenuAction={onMenuAction} />
+        <DrawMenu ref={menuRef} id={option.id} onMenuAction={handleMenuAction} />
       )}
       {showMenu && option.id === "shapes" && (
         <ShapesMenu ref={menuRef} id={option.id} onMenuAction={onMenuAction} />

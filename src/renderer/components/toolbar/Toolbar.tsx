@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import { BsHighlighter } from 'react-icons/bs';
+import { LuMove, LuPencil, LuRedo2, LuSave, LuSettings, LuShapes, LuTrash2, LuUndo2, LuX } from 'react-icons/lu';
+import { Category } from '../../enums';
 import '../../styles/Toolbar.css';
-import ToolbarOption from './ToolbarOption';
-import { Category } from '../../enums'
-import { LuPencil, LuRedo2, LuSave, LuSettings, LuShapes, LuTrash2, LuUndo2, LuX } from 'react-icons/lu';
 import ColorSelection from './ColorSelection';
+import ToolbarOption from './ToolbarOption';
 
 
 interface ToolbarProps {
@@ -16,10 +17,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
   // Configuration JSON
   const categories = ["Draw", "Format", "Utility", "Settings"];
 
-  const [selectedOptions, setSelectedOptions] = useState<{ [key in Category]?: string }>({
-    [Category.DRAW]: 'mode'
-  });
-  const options = [
+  const [options, setOptions] = useState<Array<Option>>([
     { id: "mode", category: Category.DRAW, selected: true, icon: <LuPencil size={20} /> },
     { id: "shapes", category: Category.DRAW, selected: false, icon: <LuShapes size={20} /> },
     { id: "eraser", category: Category.DRAW, selected: false, icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.133 1.491C13.341.283 15.3.281 16.508 1.491L22.511 7.492C23.719 8.7 23.717 10.66 22.511 11.867L11.869 22.509C10.648 23.73 8.798 23.815 7.469 22.486 7.424 22.441 1.489 16.507 1.489 16.507.281 15.298.281 13.34 1.489 12.131L12.133 1.491V1.491ZM15.414 2.585C14.811 1.981 13.83 1.981 13.227 2.585L6.059 9.752 14.248 17.941 21.415 10.773C22.019 10.168 22.019 9.189 21.415 8.584L15.414 2.583 15.414 2.585ZM13.154 19.034 4.966 10.846 2.585 13.227C1.98 13.832 1.981 14.811 2.585 15.414L8.583 21.412C9.232 22.062 10.125 22.082 10.775 21.415L13.154 19.034Z" /></svg> },
@@ -30,8 +28,13 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
     { id: "save", category: Category.UTILITY, selected: false, icon: <LuSave size={20} /> },
     { id: "settings", category: Category.SETTINGS, selected: false, icon: <LuSettings size={20} /> },
     { id: "hide", category: Category.SETTINGS, selected: false, icon: <LuX size={20} /> },
-  ];
+  ]);
 
+  const [selectedOptions, setSelectedOptions] = useState<{ [key in Category]?: string }>({
+    [Category.DRAW]: 'mode'
+  });
+
+  const [currentDrawMode, setCurrentDrawMode] = useState<string>("free");
 
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const MENU_GAP = 3;
@@ -173,20 +176,24 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
 
   const handleOnMenuAction = (actionType: string, ...args: any[]) => {
     onMenuAction(actionType, args[0])
+
     if (actionType === 'setBrushColor') {
       options.forEach( option => {
         if (option.id === 'draw-color' && args[0]){
           option.icon = <ColorSelection hex={args[0]} />
         }
       })
+    } else if (actionType === 'setDrawMode') {
+      options.forEach( option => {
+        if (option.id === 'mode' && args[0]){
+          if (args[0] !== "eraser"){
+            setCurrentDrawMode(args[0])
+          }
+        }
+      })
     }
-  }
 
-  // Recalculate menu positions when openMenus changes
-  useEffect(() => {
-    calculateMenuPositions(sortMenuRefs(openMenus));
-    fitToBounds(sortMenuRefs(openMenus));
-  }, [toolbarPosition, openMenus, menuOverflow]);
+  }
 
   const handleOptionClick = (clickedOption: Option) => {
     const isSelected = selectedOptions[clickedOption.category] === clickedOption.id;
@@ -200,6 +207,23 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
       [clickedOption.category]: isSelected ? undefined : clickedOption.id
     }));
   }
+
+  const getDrawModeIcon = () => {
+    switch (currentDrawMode) {
+      case "select":
+        return <LuMove size={20} />
+      case "highlight":
+        return <BsHighlighter size={20} />
+      default:
+        return <LuPencil size={20} />;
+    }
+  }
+
+  // Recalculate menu positions when openMenus changes
+  useEffect(() => {
+    calculateMenuPositions(sortMenuRefs(openMenus));
+    fitToBounds(sortMenuRefs(openMenus));
+  }, [toolbarPosition, openMenus, menuOverflow]);
 
   return (
     <Draggable
@@ -218,10 +242,15 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
               .filter((option) => option.category === category)
               .map((option) => {
 
+                if (option.id === "mode") {
+                  option.icon = getDrawModeIcon();
+                }
+
                 return (
                   <ToolbarOption
                     key={option.id}
                     option={option}
+                    currentDrawMode={currentDrawMode}
                     selected={selectedOptions[option.category] === option.id}
                     onClick={() => handleOptionClick(option)}
                     onMouseEnter={handleOptionMouseEnter}
@@ -241,6 +270,3 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
 };
 
 export default Toolbar;
-
-
-

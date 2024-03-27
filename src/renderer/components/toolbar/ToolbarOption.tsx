@@ -1,14 +1,16 @@
 // ToolbarOption.tsx
 import React, { useEffect, useRef, useState } from "react";
+import { Category } from '../../enums';
+import ColorSelection from "./ColorSelection";
 import ColorMenu from "./menus/ColorMenu";
 import DrawMenu from "./menus/DrawMenu";
 import SettingsMenu from "./menus/SettingsMenu";
 import ShapesMenu from "./menus/ShapesMenu";
-import { Category } from '../../enums'
 
 
 interface ToolbarOptionProps {
   option: Option
+  currentDrawMode?: string;
   selected: boolean
   onClick: () => void;
   onMouseEnter: () => void;
@@ -21,6 +23,7 @@ interface ToolbarOptionProps {
 
 const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   option,
+  currentDrawMode,
   selected,
   onClick,
   onMouseEnter,
@@ -50,9 +53,10 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
       }
     }
 
-
-
     switch (option.id) {
+      case "mode":
+        onMenuAction("setDrawMode", currentDrawMode);
+        break;
       case "clear":
         onMenuAction("clearCanvas");
         break;

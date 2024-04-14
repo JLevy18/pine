@@ -4,6 +4,7 @@ import { fabric } from 'fabric';
 import { FabricJSCanvas, FabricJSEditor, useFabricJSEditor } from 'fabricjs-react';
 import React, { useState } from 'react';
 import Toolbar from './components/toolbar/Toolbar';
+import { IEvent } from 'fabric/fabric-impl';
 
 interface ActionHandler {
   (editor: FabricJSEditor | undefined, ...args: any[]): void;
@@ -11,6 +12,63 @@ interface ActionHandler {
 
 interface ActionHandlers {
   [key: string]: ActionHandler;
+}
+
+interface Erasable {
+  object: fabric.Object;
+  originalOpacity: number;
+}
+
+type CanvasAction = {
+  type: 'add' | 'remove';
+  object: fabric.Object;
+}
+
+class CanvasHistory {
+  private static instance: CanvasHistory;
+  private undoStack: CanvasAction[] = [];
+  private redoStack: CanvasAction[] = [];
+
+  private constructor() {}
+
+  static getInstance(): CanvasHistory {
+    if (!CanvasHistory.instance) {
+      CanvasHistory.instance = new CanvasHistory();
+    }
+    return CanvasHistory.instance;
+  }
+
+  add(action: CanvasAction){
+    this.undoStack.push(action);
+    this.redoStack = [];
+  }
+
+  undo(canvas: fabric.Canvas) {
+    console.log(this.undoStack)
+    const action = this.undoStack.pop();
+    if (action) {
+      this.applyAction(canvas, action, 'undo')
+      this.redoStack.push(action);
+    }
+  }
+
+  redo(canvas: fabric.Canvas) {
+    const action = this.redoStack.pop();
+    if (action) {
+      this.applyAction(canvas, action, 'redo');
+      this.undoStack.push(action);
+    }
+  }
+
+  private applyAction(canvas: fabric.Canvas, action: CanvasAction, mode: 'undo' | 'redo') {
+    if (action.type === 'add' && mode === 'undo') {
+      canvas.remove(action.object);
+    } else if (action.type === 'remove' && mode === 'undo') {
+      console.log("redoing")
+      canvas.add(action.object);
+    }
+    canvas.renderAll();
+  }
 }
 
 function updateAlpha(rgba: string, newAlpha: number): string {
@@ -40,12 +98,17 @@ const App: React.FC = () => {
   const [strokeWidth, setStrokeWidth] = useState<number>(4);
   const { editor, onReady } = useFabricJSEditor()
 
+  const history = CanvasHistory.getInstance();
+
   const handleCanvasReady = (canvas: fabric.Canvas) => {
     onReady(canvas);
     canvas.isDrawingMode = true;
     canvas.freeDrawingBrush.width = strokeWidth;
     canvas.freeDrawingBrush.color = brushColor;
     canvas.freeDrawingBrush.strokeLineCap = "round";
+
+    // Track path creation for history
+    canvas.on('path:created', onPathCreated);
   };
 
   const handleMenuAction = (actionType: string, ...args: any[]) => {
@@ -57,6 +120,14 @@ const App: React.FC = () => {
     }
   };
 
+  const onPathCreated = (e: fabric.IEvent) => {
+    const path = (e as any).path as fabric.Path;
+    if (path) {
+      history.add({type: 'add', object: path });
+      console.log(history)
+    }
+  }
+
   const actionHandlers: ActionHandlers = {
     setDrawMode: (editor, mode: string) => {
       if (!editor || !editor.canvas) {
@@ -64,11 +135,9 @@ const App: React.FC = () => {
         return;
       }
       let canvas = editor.canvas;
-
       // Reset the brush settings
       if (activeBrush) {
         if (activeBrush.listeners) {
-          console.log("off")
           Object.keys(activeBrush.listeners).forEach(eventType => canvas.off(eventType, activeBrush.listeners![eventType]));
         }
         canvas.isDrawingMode = true;
@@ -90,11 +159,11 @@ const App: React.FC = () => {
           break;
         case "eraser":
           let isErasing = false;
-          let objectsToRemove: Array<fabric.Object> = [];
+          let objectsToRemove: Erasable[] = [];
           canvas.isDrawingMode = false;
           canvas.selection = false;
 
-          const listeners = {
+          const eraserListeners = {
             'mouse:down': (e: fabric.IEvent) => {
               isErasing = true;
             },
@@ -104,9 +173,9 @@ const App: React.FC = () => {
               let path = new fabric.Path(`M ${pointer.x} ${pointer.y}`);
               const objects = canvas.getObjects();
               for (let obj of objects) {
-                if (obj === path) return;
+                if (obj === path || objectsToRemove.some(item => item.object === obj)) continue;
                 if (path.intersectsWithObject(obj)) {
-                  objectsToRemove.push(obj)
+                  objectsToRemove.push({object: obj, originalOpacity: obj.opacity || 1})
                   obj.set('opacity', 0.3)
                   canvas.renderAll();
                 }
@@ -114,16 +183,21 @@ const App: React.FC = () => {
             },
             'mouse:up': (e: fabric.IEvent) => {
               isErasing = false;
-              if (objectsToRemove.length > 0)
-                for (let obj of objectsToRemove) {
-                  canvas.remove(obj)
+              if (objectsToRemove.length > 0) {
+                for (let {object, originalOpacity} of objectsToRemove) {
+                  object.set('opacity', originalOpacity)
+                  history.add({type: 'remove', object: object});
+                  canvas.remove(object)
                 }
+                console.log(history)
+                objectsToRemove = [];
+              }
             }
           };
-          Object.keys(listeners).forEach(eventType => {
-            canvas.on(eventType, listeners[eventType as keyof Listeners]);
+          Object.keys(eraserListeners).forEach(eventType => {
+            canvas.on(eventType, eraserListeners[eventType as keyof Listeners]);
           });
-          setActiveBrush({ mode: mode, listeners })
+          setActiveBrush({ mode: mode, listeners: eraserListeners })
           break;
         default:
           setActiveBrush({ mode: mode })
@@ -150,11 +224,26 @@ const App: React.FC = () => {
         setBrushColor(newColor);
       }
     },
-
-    clearCanvas: () => {
+    clearCanvas: (editor) => {
       let canvas = editor?.canvas;
       if (canvas) {
+        for (let obj of canvas.getObjects()){
+          history.add({type: 'remove', object: obj});
+        }
+        console.log(history)
         canvas.clear();
+      }
+    },
+    undoAction: (editor) => {
+      let canvas = editor?.canvas;
+      if (canvas) {
+        history.undo(canvas)
+      }
+    },
+    redoAction: (editor) => {
+      let canvas = editor?.canvas;
+      if (canvas) {
+        history.redo(canvas)
       }
     }
   };

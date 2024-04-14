@@ -152,6 +152,9 @@ const App: React.FC = () => {
       switch (mode) {
         case "select":
           canvas.isDrawingMode = false;
+          canvas.selection = true;
+          canvas.hoverCursor = "move";
+          canvas.getObjects().forEach(obj => obj.selectable = true);
           setActiveBrush({ mode: mode })
           break;
         case "highlight":
@@ -164,7 +167,10 @@ const App: React.FC = () => {
           let objectsToRemove: Erasable[] = [];
           canvas.isDrawingMode = false;
           canvas.selection = false;
-
+          canvas.hoverCursor = "default";
+          canvas.getObjects().forEach(obj => obj.selectable = false);
+          canvas.discardActiveObject();
+          canvas.renderAll();
           const eraserListeners = {
             'mouse:down': (e: fabric.IEvent) => {
               isErasing = true;

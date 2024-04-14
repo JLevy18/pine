@@ -202,6 +202,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
     if (clickedOption.id === 'redo'){
       onMenuAction('redoAction');
     }
+    if (clickedOption.id === 'save'){
+      onMenuAction('saveCanvas');
+    }
+
     const isSelected = selectedOptions[clickedOption.category] === clickedOption.id;
     const currentlySelected = selectedOptions[clickedOption.category];
     // If the clicked option is already selected and belongs to the DRAW category, return early

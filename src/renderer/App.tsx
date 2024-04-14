@@ -29,7 +29,7 @@ class CanvasHistory {
   private undoStack: CanvasAction[] = [];
   private redoStack: CanvasAction[] = [];
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): CanvasHistory {
     if (!CanvasHistory.instance) {
@@ -38,7 +38,7 @@ class CanvasHistory {
     return CanvasHistory.instance;
   }
 
-  add(action: CanvasAction){
+  add(action: CanvasAction) {
     this.undoStack.push(action);
     this.redoStack = [];
   }
@@ -91,6 +91,41 @@ function updateAlpha(rgba: string, newAlpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${clampedAlpha})`;
 }
 
+function takeScreenshot(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Send message to main process to capture the screenshot
+    window.electron.ipcRenderer.sendMessage('capture-screenshot');
+
+    // Set up a listener for the screenshot-captured channel
+    window.electron.ipcRenderer.once('screenshot-captured', (dataURL: unknown) => {
+      if (typeof dataURL === 'string') {
+        resolve(dataURL); // Safely resolve with the string
+      } else {
+        reject(new Error("Expected dataURL to be a string, but received a different type"));
+      }
+    });
+
+    // Optionally handle errors or timeout
+    setTimeout(() => {
+      reject(new Error("Screenshot capture timed out")); // Reject the Promise after a timeout
+    }, 5000); // Timeout after 5000 milliseconds
+  });
+}
+
+async function initiateDownload() {
+  try {
+    const dataURL = await takeScreenshot();
+    const link = document.createElement('a');
+    link.download = 'canvas.png'; // Set the download filename
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click(); // Trigger the download
+    document.body.removeChild(link); // Clean up
+  } catch (error) {
+    console.error('Failed to capture screenshot:', error);
+  }
+}
+
 const HIGHLIGHT_OPACITY = 0.6;
 
 const App: React.FC = () => {
@@ -125,7 +160,7 @@ const App: React.FC = () => {
   const onPathCreated = (e: fabric.IEvent) => {
     const path = (e as any).path as fabric.Path;
     if (path) {
-      history.add({type: 'add', object: path });
+      history.add({ type: 'add', object: path });
       console.log(history)
     }
   }
@@ -183,7 +218,7 @@ const App: React.FC = () => {
               for (let obj of objects) {
                 if (obj === path || objectsToRemove.some(item => item.object === obj)) continue;
                 if (path.intersectsWithObject(obj)) {
-                  objectsToRemove.push({object: obj, originalOpacity: obj.opacity || 1})
+                  objectsToRemove.push({ object: obj, originalOpacity: obj.opacity || 1 })
                   obj.set('opacity', 0.3)
                   canvas.renderAll();
                 }
@@ -192,9 +227,9 @@ const App: React.FC = () => {
             'mouse:up': (e: fabric.IEvent) => {
               isErasing = false;
               if (objectsToRemove.length > 0) {
-                for (let {object, originalOpacity} of objectsToRemove) {
+                for (let { object, originalOpacity } of objectsToRemove) {
                   object.set('opacity', originalOpacity)
-                  history.add({type: 'remove', object: object});
+                  history.add({ type: 'remove', object: object });
                   canvas.remove(object)
                 }
                 objectsToRemove = [];
@@ -233,10 +268,18 @@ const App: React.FC = () => {
     clearCanvas: (editor) => {
       let canvas = editor?.canvas;
       if (canvas) {
-        for (let obj of canvas.getObjects()){
-          history.add({type: 'remove', object: obj});
+        for (let obj of canvas.getObjects()) {
+          history.add({ type: 'remove', object: obj });
         }
         canvas.clear();
+      }
+    },
+    saveCanvas: (editor) => {
+      let canvas = editor?.canvas;
+      if (canvas) {
+        //Hide the toolbar before screenshot is taken and replace it after
+
+        initiateDownload();
       }
     },
     undoAction: (editor) => {

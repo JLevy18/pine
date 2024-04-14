@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, screen, desktopCapturer, SourcesOptions } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -25,10 +25,10 @@ class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
+ipcMain.on('capture-screenshot', async (event, arg) => {
+  const screenShotInfo = await captureScreen();
+  const dataURL = screenShotInfo?.toDataURL();
+  event.sender.send('screenshot-captured', dataURL);
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -139,3 +139,19 @@ app
     });
   })
   .catch(console.log);
+
+async function captureScreen() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const {width,height} = primaryDisplay.size;
+  const options: SourcesOptions = {
+    types: ['screen'],
+    thumbnailSize: {width,height}
+  };
+
+  const sources = await desktopCapturer.getSources(options);
+
+  const primarySource = sources.find(({display_id}) => display_id == primaryDisplay.id.toString())
+
+  const image = primarySource?.thumbnail;
+  return image;
+}

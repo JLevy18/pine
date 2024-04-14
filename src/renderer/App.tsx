@@ -44,7 +44,6 @@ class CanvasHistory {
   }
 
   undo(canvas: fabric.Canvas) {
-    console.log(this.undoStack)
     const action = this.undoStack.pop();
     if (action) {
       this.applyAction(canvas, action, 'undo')
@@ -64,8 +63,11 @@ class CanvasHistory {
     if (action.type === 'add' && mode === 'undo') {
       canvas.remove(action.object);
     } else if (action.type === 'remove' && mode === 'undo') {
-      console.log("redoing")
       canvas.add(action.object);
+    } else if (action.type === 'add' && mode === 'redo') {
+      canvas.add(action.object);
+    } else if (action.type === 'remove' && mode === 'redo') {
+      canvas.remove(action.object)
     }
     canvas.renderAll();
   }
@@ -189,7 +191,6 @@ const App: React.FC = () => {
                   history.add({type: 'remove', object: object});
                   canvas.remove(object)
                 }
-                console.log(history)
                 objectsToRemove = [];
               }
             }
@@ -216,7 +217,6 @@ const App: React.FC = () => {
       let canvas = editor?.canvas;
       if (canvas) {
         if (activeBrush?.mode === "highlight") {
-          console.log(updateAlpha(newColor, HIGHLIGHT_OPACITY))
           canvas.freeDrawingBrush.color = updateAlpha(newColor, HIGHLIGHT_OPACITY);
         } else {
           canvas.freeDrawingBrush.color = newColor;
@@ -230,7 +230,6 @@ const App: React.FC = () => {
         for (let obj of canvas.getObjects()){
           history.add({type: 'remove', object: obj});
         }
-        console.log(history)
         canvas.clear();
       }
     },
@@ -238,6 +237,7 @@ const App: React.FC = () => {
       let canvas = editor?.canvas;
       if (canvas) {
         history.undo(canvas)
+        console.log(history)
       }
     },
     redoAction: (editor) => {

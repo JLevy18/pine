@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, screen, desktopCapturer, SourcesOptions } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, screen, desktopCapturer, SourcesOptions, Rectangle } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -71,6 +71,7 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
+    resizable: false,
     transparent: true,
     x: 0,
     y: 400,
@@ -141,17 +142,23 @@ app
   .catch(console.log);
 
 async function captureScreen() {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const {width,height} = primaryDisplay.size;
-  const options: SourcesOptions = {
+  const { x, y, width, height } = mainWindow?.getBounds() || {x: 0, y: 0, width: 1280, height: 720};
+
+  // Capture options for the whole screen
+  const options: Electron.SourcesOptions = {
     types: ['screen'],
-    thumbnailSize: {width,height}
+    thumbnailSize: screen.getPrimaryDisplay().size
   };
 
+  // Get sources
   const sources = await desktopCapturer.getSources(options);
+  const primarySource = sources.find(({ display_id }) => display_id === screen.getPrimaryDisplay().id.toString());
 
-  const primarySource = sources.find(({display_id}) => display_id == primaryDisplay.id.toString())
+  if (!primarySource?.thumbnail) return undefined;
 
-  const image = primarySource?.thumbnail;
-  return image;
+  // Crop the image to the mainWindow
+  const cropRect: Rectangle = { x, y, width, height };
+  const croppedImage = primarySource.thumbnail.crop(cropRect);
+
+  return croppedImage;
 }

@@ -9,10 +9,11 @@ import ToolbarOption from './ToolbarOption';
 
 
 interface ToolbarProps {
+  isVisibile: boolean;
   onMenuAction: (actionType: string, ...args: any[]) => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
 
   // Configuration JSON
   const categories = ["Draw", "Format", "Utility", "Settings"];
@@ -244,7 +245,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction }) => {
       onDrag={handleDrag}
       onStop={handleDrag}
     >
-      <div ref={toolbarRef} className={`toolbar ${toolbarDirection}`}>
+      <div ref={toolbarRef} className={`toolbar ${toolbarDirection} ${isVisibile ? "" : "invisible"}`}>
         {categories.map((category, categoryIndex) => (
           <React.Fragment key={categoryIndex}>
             {categoryIndex > 0 && <div className="separator" />}

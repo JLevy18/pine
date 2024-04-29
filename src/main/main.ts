@@ -9,11 +9,14 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, screen, desktopCapturer, SourcesOptions, Rectangle } from 'electron';
+import os from 'os';
+import fs from 'fs';
+import { app, GlobalShortcut, BrowserWindow, shell, ipcMain, screen, desktopCapturer, Rectangle, Tray, Menu, dialog, globalShortcut } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import icon from '../../assets/icon.svg';
 
 class AppUpdater {
   constructor() {
@@ -23,12 +26,38 @@ class AppUpdater {
   }
 }
 
+let tray: Tray | null = null;
+
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('capture-screenshot', async (event, arg) => {
   const screenShotInfo = await captureScreen();
-  const dataURL = screenShotInfo?.toDataURL();
-  event.sender.send('screenshot-captured', dataURL);
+  if (screenShotInfo){
+    const dataURL = screenShotInfo.toDataURL();
+
+    const downloadsFolder = path.join(os.homedir(), 'Downloads');
+    const defaultFilePath = path.join(downloadsFolder, `pineshot_${Date.now()}.png`)
+
+    const { filePath } = await dialog.showSaveDialog({
+      title: 'Save Notes',
+      buttonLabel: 'Save',
+      defaultPath: defaultFilePath,
+    })
+
+    if (filePath) {
+      const base64Data = dataURL.replace(/^data:image\/png;base64,/, '');
+      fs.writeFile(filePath, base64Data, 'base64', (err) => {
+        if (err) {
+          console.error('Error saving the file:', err);
+          event.sender.send('screenshot-save-error', 'Failed to save file');
+        } else {
+          event.sender.send('screenshot-saved', 'File saved successfully');
+        }
+      });
+    }
+  } else {
+    throw new Error("Failed to capture screenshot");
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -72,10 +101,11 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     show: false,
     resizable: false,
+    skipTaskbar: true,
     transparent: true,
     x: 0,
     y: 400,
-    titleBarStyle: 'default', // Change to hidden for prod
+    titleBarStyle: 'hidden', // Change to hidden for prod
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
@@ -93,9 +123,46 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      //mainWindow.maximize();
+
+      // Tray Menus
+      tray = new Tray(getAssetPath('icon.ico'));
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: 'Show',
+          click: () => {
+            mainWindow?.show();
+          }
+        },
+        {
+          label: 'Hide',
+          click: () => {
+            mainWindow?.hide();
+          }
+        },
+        {
+          label: 'Quit Pine',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]);
+      tray.setContextMenu(contextMenu);
+      tray.setToolTip('Pine');
+
+      // Main window
+      mainWindow.maximize();
       mainWindow.setResizable(false);
       mainWindow.show();
+
+      // Hotkeys
+      globalShortcut.register('Ctrl+Shift+P', () => {
+        if (mainWindow?.isVisible()){
+          mainWindow.hide();
+        } else {
+          mainWindow?.show();
+        }
+      })
+
     }
   });
 
@@ -121,9 +188,11 @@ const createWindow = async () => {
  * Add event listeners...
  */
 
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -140,6 +209,11 @@ app
     });
   })
   .catch(console.log);
+
+
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+  })
 
 async function captureScreen() {
   const { x, y, width, height } = mainWindow?.getBounds() || {x: 0, y: 0, width: 1280, height: 720};

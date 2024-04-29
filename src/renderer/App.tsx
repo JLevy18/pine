@@ -2,9 +2,10 @@ import './styles/App.css';
 
 import { fabric } from 'fabric';
 import { FabricJSCanvas, FabricJSEditor, useFabricJSEditor } from 'fabricjs-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Toolbar from './components/toolbar/Toolbar';
 import { IEvent } from 'fabric/fabric-impl';
+import { IpcRendererEvent } from 'electron/renderer';
 
 interface ActionHandler {
   (editor: FabricJSEditor | undefined, ...args: any[]): void;
@@ -91,36 +92,10 @@ function updateAlpha(rgba: string, newAlpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${clampedAlpha})`;
 }
 
-function takeScreenshot(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    // Send message to main process to capture the screenshot
-    window.electron.ipcRenderer.sendMessage('capture-screenshot');
-
-    // Set up a listener for the screenshot-captured channel
-    window.electron.ipcRenderer.once('screenshot-captured', (dataURL: unknown) => {
-      if (typeof dataURL === 'string') {
-        resolve(dataURL); // Safely resolve with the string
-      } else {
-        reject(new Error("Expected dataURL to be a string, but received a different type"));
-      }
-    });
-
-    // Optionally handle errors or timeout
-    setTimeout(() => {
-      reject(new Error("Screenshot capture timed out")); // Reject the Promise after a timeout
-    }, 5000); // Timeout after 5000 milliseconds
-  });
-}
 
 async function initiateDownload() {
   try {
-    const dataURL = await takeScreenshot();
-    const link = document.createElement('a');
-    link.download = 'canvas.png'; // Set the download filename
-    link.href = dataURL;
-    document.body.appendChild(link);
-    link.click(); // Trigger the download
-    document.body.removeChild(link); // Clean up
+    window.electron.ipcRenderer.sendMessage('capture-screenshot');
   } catch (error) {
     console.error('Failed to capture screenshot:', error);
   }
@@ -132,6 +107,7 @@ const App: React.FC = () => {
 
   const [activeBrush, setActiveBrush] = useState<BrushState | null>({ mode: "free" });
   const [brushColor, setBrushColor] = useState<string>('rgba(219, 39, 119, 1)');
+  const [toolbarVisibility, setToolbarVisibility] = useState<boolean>(true);
   const [strokeWidth, setStrokeWidth] = useState<number>(4);
   const { editor, onReady } = useFabricJSEditor()
 
@@ -277,9 +253,23 @@ const App: React.FC = () => {
     saveCanvas: (editor) => {
       let canvas = editor?.canvas;
       if (canvas) {
-        //Hide the toolbar before screenshot is taken and replace it after
+        setToolbarVisibility(false);
+        window.electron.ipcRenderer.sendMessage('capture-screenshot');
 
-        initiateDownload();
+        const handleScreenshotResponse = (...args: unknown[]) => {
+          const [event, arg] = args as [IpcRendererEvent, string];
+          setToolbarVisibility(true); // Show the toolbar again
+          if (arg === 'screenshot-saved') {
+            console.log('Screenshot was saved successfully.');
+          } else {
+            console.error('Error saving screenshot:', event);
+          }
+        };
+
+        // Attach the response handlers
+        window.electron.ipcRenderer.once('screenshot-save-error', handleScreenshotResponse);
+        window.electron.ipcRenderer.once('screenshot-saved', handleScreenshotResponse);
+
       }
     },
     undoAction: (editor) => {
@@ -299,7 +289,7 @@ const App: React.FC = () => {
 
   return (
     <main>
-      <Toolbar onMenuAction={handleMenuAction} />
+      <Toolbar isVisibile={toolbarVisibility} onMenuAction={handleMenuAction} />
       <FabricJSCanvas className='pine-canvas absolute top-0 bottom-0 left-0 right-0 z-0' onReady={handleCanvasReady} />
     </main>
   );

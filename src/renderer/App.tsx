@@ -26,18 +26,9 @@ type CanvasAction = {
 }
 
 class CanvasHistory {
-  private static instance: CanvasHistory;
   private undoStack: CanvasAction[] = [];
   private redoStack: CanvasAction[] = [];
 
-  private constructor() { }
-
-  static getInstance(): CanvasHistory {
-    if (!CanvasHistory.instance) {
-      CanvasHistory.instance = new CanvasHistory();
-    }
-    return CanvasHistory.instance;
-  }
 
   add(action: CanvasAction) {
     this.undoStack.push(action);
@@ -47,6 +38,7 @@ class CanvasHistory {
   undo(canvas: fabric.Canvas) {
     const action = this.undoStack.pop();
     if (action) {
+      console.log("historyU", this)
       this.applyAction(canvas, action, 'undo')
       this.redoStack.push(action);
     }
@@ -55,12 +47,14 @@ class CanvasHistory {
   redo(canvas: fabric.Canvas) {
     const action = this.redoStack.pop();
     if (action) {
+      console.log("history", this)
       this.applyAction(canvas, action, 'redo');
       this.undoStack.push(action);
     }
   }
 
   private applyAction(canvas: fabric.Canvas, action: CanvasAction, mode: 'undo' | 'redo') {
+    console.log(action.type)
     if (action.type === 'add' && mode === 'undo') {
       canvas.remove(action.object);
     } else if (action.type === 'remove' && mode === 'undo') {
@@ -69,6 +63,8 @@ class CanvasHistory {
       canvas.add(action.object);
     } else if (action.type === 'remove' && mode === 'redo') {
       canvas.remove(action.object)
+    } else {
+      console.error("issue")
     }
     canvas.renderAll();
   }
@@ -92,15 +88,6 @@ function updateAlpha(rgba: string, newAlpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${clampedAlpha})`;
 }
 
-
-async function initiateDownload() {
-  try {
-    window.electron.ipcRenderer.sendMessage('capture-screenshot');
-  } catch (error) {
-    console.error('Failed to capture screenshot:', error);
-  }
-}
-
 const HIGHLIGHT_OPACITY = 0.6;
 
 const App: React.FC = () => {
@@ -109,9 +96,10 @@ const App: React.FC = () => {
   const [brushColor, setBrushColor] = useState<string>('rgba(219, 39, 119, 1)');
   const [toolbarVisibility, setToolbarVisibility] = useState<boolean>(true);
   const [strokeWidth, setStrokeWidth] = useState<number>(4);
+  const [history, setHistory] = useState(new CanvasHistory());
   const { editor, onReady } = useFabricJSEditor()
 
-  const history = CanvasHistory.getInstance();
+
 
   const handleCanvasReady = (canvas: fabric.Canvas) => {
     onReady(canvas);
@@ -137,7 +125,7 @@ const App: React.FC = () => {
     const path = (e as any).path as fabric.Path;
     if (path) {
       history.add({ type: 'add', object: path });
-      console.log(history)
+      setHistory(history);
     }
   }
 
@@ -206,6 +194,7 @@ const App: React.FC = () => {
                 for (let { object, originalOpacity } of objectsToRemove) {
                   object.set('opacity', originalOpacity)
                   history.add({ type: 'remove', object: object });
+                  setHistory(history);
                   canvas.remove(object)
                 }
                 objectsToRemove = [];
@@ -246,6 +235,7 @@ const App: React.FC = () => {
       if (canvas) {
         for (let obj of canvas.getObjects()) {
           history.add({ type: 'remove', object: obj });
+          setHistory(history);
         }
         canvas.clear();
       }
@@ -274,18 +264,50 @@ const App: React.FC = () => {
     },
     undoAction: (editor) => {
       let canvas = editor?.canvas;
+      console.log(canvas)
       if (canvas) {
-        history.undo(canvas)
         console.log(history)
+        history.undo(canvas)
       }
     },
     redoAction: (editor) => {
       let canvas = editor?.canvas;
+      console.log(canvas)
       if (canvas) {
+        console.log(history)
         history.redo(canvas)
       }
     }
   };
+
+  useEffect(() => {
+
+    const handleUndoEvent = () => {
+      console.log("undoEvent")
+      handleMenuAction("undoAction", editor);
+    }
+
+    const handleRedoEvent = () => {
+      console.log("redoEvent")
+      handleMenuAction("redoAction");
+    }
+
+    const handleSaveEvent = () => {
+      console.log("saveEvent")
+      handleMenuAction("saveCanvas");
+    }
+
+    const removeUndoListener = window.electron.ipcRenderer.on('undo-canvas', handleUndoEvent)
+    const removeRedoListener = window.electron.ipcRenderer.on('redo-canvas', handleRedoEvent)
+    const removeSaveListener = window.electron.ipcRenderer.on('save-canvas', handleSaveEvent)
+
+    return () => {
+      removeUndoListener()
+      removeRedoListener()
+      removeSaveListener()
+    };
+
+  },[])
 
   return (
     <main>

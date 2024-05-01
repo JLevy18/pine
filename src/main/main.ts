@@ -32,7 +32,7 @@ let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('capture-screenshot', async (event, arg) => {
   const screenShotInfo = await captureScreen();
-  if (screenShotInfo){
+  if (screenShotInfo) {
     const dataURL = screenShotInfo.toDataURL();
 
     const downloadsFolder = path.join(os.homedir(), 'Downloads');
@@ -41,6 +41,7 @@ ipcMain.on('capture-screenshot', async (event, arg) => {
     const { filePath } = await dialog.showSaveDialog({
       title: 'Save Notes',
       buttonLabel: 'Save',
+      filters: [{ name: 'Pine Notes', extensions: ['png'] }],
       defaultPath: defaultFilePath,
     })
 
@@ -69,7 +70,7 @@ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
-  require('electron-debug')({showDevTools: false});
+  require('electron-debug')({ showDevTools: false });
 }
 
 const installExtensions = async () => {
@@ -120,54 +121,70 @@ const createWindow = async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    if (process.env.START_MINIMIZED) {
-      mainWindow.minimize();
-    } else {
 
-      // Tray Menus
-      tray = new Tray(getAssetPath('icon.ico'));
-      const contextMenu = Menu.buildFromTemplate([
-        {
-          label: 'Show',
-          click: () => {
-            mainWindow?.show();
-          }
-        },
-        {
-          label: 'Hide',
-          click: () => {
-            mainWindow?.hide();
-          }
-        },
-        {
-          label: 'Quit Pine',
-          click: () => {
-            app.quit();
-          }
-        }
-      ]);
-      tray.setContextMenu(contextMenu);
-      tray.setToolTip('Pine');
-
-      // Main window
-      mainWindow.maximize();
-      mainWindow.setResizable(false);
-      mainWindow.show();
-
-      // Hotkeys
-      globalShortcut.register('Ctrl+Shift+P', () => {
-        if (mainWindow?.isVisible()){
-          mainWindow.hide();
-        } else {
+    // Tray Menus
+    tray = new Tray(getAssetPath('icon.ico'));
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show',
+        click: () => {
           mainWindow?.show();
         }
+      },
+      {
+        label: 'Hide',
+        click: () => {
+          mainWindow?.hide();
+        }
+      },
+      {
+        label: 'Quit Pine',
+        click: () => {
+          app.quit();
+        }
+      }
+    ]);
+    tray.setContextMenu(contextMenu);
+    tray.setToolTip('Pine');
+
+    // Main window
+    mainWindow.maximize();
+    mainWindow.setResizable(false);
+
+    // Hotkeys
+    globalShortcut.register('Ctrl+Shift+P', () => {
+      if (mainWindow?.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow?.show();
+      }
+    })
+
+
+    mainWindow.on('focus', () => {
+      globalShortcut.register('Ctrl+Z', () => {
+        mainWindow?.webContents.send('undo-canvas')
       })
 
-    }
-  });
+      globalShortcut.register('Ctrl+Y', () => {
+        mainWindow?.webContents.send('redo-canvas')
+      })
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+      globalShortcut.register('Ctrl+S', () => {
+        mainWindow?.webContents.send('save-canvas')
+      })
+    });
+
+    mainWindow.on('blur', () => {
+      globalShortcut.unregister('Ctrl+Z');
+      globalShortcut.unregister('Ctrl+Y');
+      globalShortcut.unregister('Ctrl+S');
+    });
+
+    mainWindow.on('closed', () => {
+      mainWindow = null;
+    });
+
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);
@@ -211,12 +228,12 @@ app
   .catch(console.log);
 
 
-  app.on('will-quit', () => {
-    globalShortcut.unregisterAll();
-  })
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+})
 
 async function captureScreen() {
-  const { x, y, width, height } = mainWindow?.getBounds() || {x: 0, y: 0, width: 1280, height: 720};
+  const { x, y, width, height } = mainWindow?.getBounds() || { x: 0, y: 0, width: 1280, height: 720 };
 
   // Capture options for the whole screen
   const options: Electron.SourcesOptions = {

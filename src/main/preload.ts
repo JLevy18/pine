@@ -2,7 +2,12 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type Channels = 'capture-screenshot' | 'screenshot-saved' | 'screenshot-save-error';
+export type Channels = 'capture-screenshot' |
+                         'screenshot-saved' |
+                    'screenshot-save-error' |
+                              'undo-canvas' |
+                              'redo-canvas' |
+                              'save-canvas';
 
 const electronHandler = {
   ipcRenderer: {

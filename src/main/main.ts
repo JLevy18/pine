@@ -57,6 +57,7 @@ ipcMain.on('capture-screenshot', async (event, arg) => {
       });
     }
   } else {
+    event.sender.send('screenshot-save-error', 'Failed to save file');
     throw new Error("Failed to capture screenshot");
   }
 });
@@ -160,31 +161,30 @@ const createWindow = async () => {
       }
     })
 
+  });
 
-    mainWindow.on('focus', () => {
-      globalShortcut.register('Ctrl+Z', () => {
-        mainWindow?.webContents.send('undo-canvas')
-      })
+  mainWindow.on('focus', () => {
+    globalShortcut.register('Ctrl+Z', () => {
+      mainWindow?.webContents.send('undo-canvas')
+    })
 
-      globalShortcut.register('Ctrl+Y', () => {
-        mainWindow?.webContents.send('redo-canvas')
-      })
+    globalShortcut.register('Ctrl+Y', () => {
+      mainWindow?.webContents.send('redo-canvas')
+    })
 
-      globalShortcut.register('Ctrl+S', () => {
-        mainWindow?.webContents.send('save-canvas')
-      })
-    });
+    globalShortcut.register('Ctrl+S', () => {
+      mainWindow?.webContents.send('save-canvas')
+    })
+  });
 
-    mainWindow.on('blur', () => {
-      globalShortcut.unregister('Ctrl+Z');
-      globalShortcut.unregister('Ctrl+Y');
-      globalShortcut.unregister('Ctrl+S');
-    });
+  mainWindow.on('blur', () => {
+    globalShortcut.unregister('Ctrl+Z');
+    globalShortcut.unregister('Ctrl+Y');
+    globalShortcut.unregister('Ctrl+S');
+  });
 
-    mainWindow.on('closed', () => {
-      mainWindow = null;
-    });
-
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);
@@ -214,6 +214,12 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+const gotTheLock = app.requestSingleInstanceLock();
+
+if(!gotTheLock){
+  app.quit();
+}
 
 app
   .whenReady()

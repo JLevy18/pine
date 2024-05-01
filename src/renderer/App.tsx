@@ -54,7 +54,6 @@ class CanvasHistory {
   }
 
   private applyAction(canvas: fabric.Canvas, action: CanvasAction, mode: 'undo' | 'redo') {
-    console.log(action.type)
     if (action.type === 'add' && mode === 'undo') {
       canvas.remove(action.object);
     } else if (action.type === 'remove' && mode === 'undo') {
@@ -193,6 +192,7 @@ const App: React.FC = () => {
               if (objectsToRemove.length > 0) {
                 for (let { object, originalOpacity } of objectsToRemove) {
                   object.set('opacity', originalOpacity)
+                  object.selectable = false;
                   history.add({ type: 'remove', object: object });
                   setHistory(history);
                   canvas.remove(object)
@@ -264,15 +264,12 @@ const App: React.FC = () => {
     },
     undoAction: (editor) => {
       let canvas = editor?.canvas;
-      console.log(canvas)
       if (canvas) {
-        console.log(history)
         history.undo(canvas)
       }
     },
     redoAction: (editor) => {
       let canvas = editor?.canvas;
-      console.log(canvas)
       if (canvas) {
         console.log(history)
         history.redo(canvas)
@@ -283,17 +280,14 @@ const App: React.FC = () => {
   useEffect(() => {
 
     const handleUndoEvent = () => {
-      console.log("undoEvent")
-      handleMenuAction("undoAction", editor);
+      handleMenuAction("undoAction");
     }
 
     const handleRedoEvent = () => {
-      console.log("redoEvent")
       handleMenuAction("redoAction");
     }
 
     const handleSaveEvent = () => {
-      console.log("saveEvent")
       handleMenuAction("saveCanvas");
     }
 
@@ -307,7 +301,7 @@ const App: React.FC = () => {
       removeSaveListener()
     };
 
-  },[])
+  },[editor])
 
   return (
     <main>

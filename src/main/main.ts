@@ -129,29 +129,31 @@ const createWindow = async () => {
     }
 
     // Tray Menus
-    tray = new Tray(getAssetPath('icon.ico'));
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: 'Show',
-        click: () => {
-          mainWindow?.show();
-        }
-      },
-      {
-        label: 'Hide',
-        click: () => {
-          mainWindow?.hide();
-        }
-      },
-      {
-        label: 'Quit Pine',
-        click: () => {
-          app.quit();
-        }
-      }
-    ]);
-    tray.setContextMenu(contextMenu);
-    tray.setToolTip('Pine');
+    if (!tray) {
+      tray = new Tray(getAssetPath('icon.ico'));
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: 'Show',
+          click: () => {
+            mainWindow?.show();
+          },
+        },
+        {
+          label: 'Hide',
+          click: () => {
+            mainWindow?.hide();
+          },
+        },
+        {
+          label: 'Quit Pine',
+          click: () => {
+            app.quit();
+          },
+        },
+      ]);
+      tray.setContextMenu(contextMenu);
+      tray.setToolTip('Pine');
+    }
 
     // Main window
     //mainWindow.maximize();

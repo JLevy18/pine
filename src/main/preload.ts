@@ -7,7 +7,8 @@ export type Channels = 'capture-screenshot' |
                     'screenshot-save-error' |
                               'undo-canvas' |
                               'redo-canvas' |
-                              'save-canvas';
+                              'save-canvas' |
+                              'hide-app';
 
 const electronHandler = {
   ipcRenderer: {

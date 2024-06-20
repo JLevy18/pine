@@ -20,7 +20,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
 
   const [options, setOptions] = useState<Array<Option>>([
     { id: "mode", category: Category.DRAW, selected: true, icon: <LuPencil size={20} /> },
-    { id: "shapes", category: Category.DRAW, selected: false, icon: <LuShapes size={20} /> },
+    /*{ id: "shapes", category: Category.DRAW, selected: false, icon: <LuShapes size={20} /> },*/
     { id: "eraser", category: Category.DRAW, selected: false, icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.133 1.491C13.341.283 15.3.281 16.508 1.491L22.511 7.492C23.719 8.7 23.717 10.66 22.511 11.867L11.869 22.509C10.648 23.73 8.798 23.815 7.469 22.486 7.424 22.441 1.489 16.507 1.489 16.507.281 15.298.281 13.34 1.489 12.131L12.133 1.491V1.491ZM15.414 2.585C14.811 1.981 13.83 1.981 13.227 2.585L6.059 9.752 14.248 17.941 21.415 10.773C22.019 10.168 22.019 9.189 21.415 8.584L15.414 2.583 15.414 2.585ZM13.154 19.034 4.966 10.846 2.585 13.227C1.98 13.832 1.981 14.811 2.585 15.414L8.583 21.412C9.232 22.062 10.125 22.082 10.775 21.415L13.154 19.034Z" /></svg> },
     { id: "draw-color", category: Category.FORMAT, selected: false, icon: <ColorSelection hex="#DB2777" /> },
     { id: "undo", category: Category.UTILITY, selected: false, icon: <LuUndo2 size={20} /> },
@@ -40,10 +40,12 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const MENU_GAP = 3;
 
+  const [isGrabbing, setIsGrabbing] = useState(false);
   const [disableDrag, setDisableDrag] = useState(false);
 
   const [openMenus, setOpenMenus] = useState<React.RefObject<HTMLDivElement>[]>([]);
   const [menuOverflow, setMenuOverflow] = useState<number>(0);
+  const [menuMaxVerticalDist, setMenuMaxVerticalDist] = useState<number>(0);
   const [toolbarDirection, setToolbarDirection] = useState("horizontal");
   const [toolbarPosition, setToolbarPosition] = useState<Position>({ x: 0, y: 0 });
 
@@ -85,6 +87,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
   function fitToBounds(menuRefs: React.RefObject<HTMLDivElement>[]): void {
 
     let toolbarElement = toolbarRef.current;
+
+    // HORIZONTAL FIT
     if (menuOverflow > 0 && toolbarElement) {
       let toolbarRightEdge = toolbarElement.getBoundingClientRect().right;
       if (window.innerWidth - toolbarRightEdge < menuOverflow) {
@@ -95,6 +99,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
           let menuElement = menuRefs[i].current;
           let prevMenuElement = menuRefs[i + 1]?.current;
           if (menuElement) {
+
+
+
             if (i === menuRefs.length - 1) {
               let currentTransform = getXTranslation(menuElement);
               translation = translation + currentTransform;
@@ -109,10 +116,31 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
                 menuElement.style.transform = `translateX(${currentTransform - ((menuRightEdge + MENU_GAP) - prevMenuLeftEdge)}px)`;
               }
             }
+
           }
         }
       }
     }
+
+    // VERTICAL FIT
+    if (toolbarElement) {
+      const toolbarRect = toolbarElement.getBoundingClientRect();
+      menuRefs.forEach(menuRef => {
+        const menuElement = menuRef.current;
+        if (menuElement) {
+          //console.log(toolbarRect.bottom + (menuRect.bottom - toolbarRect.bottom))
+          if (window.innerHeight < toolbarRect.bottom + (menuMaxVerticalDist)) {
+            menuElement.style.top = "";
+            menuElement.style.bottom = "100%";
+          } else {
+            menuElement.style.top = "100%";
+            menuElement.style.bottom = "";
+          }
+        }
+
+      });
+    }
+
   }
 
   const calculateMenuPositions = useCallback((menuRefs: React.RefObject<HTMLDivElement>[]) => {
@@ -122,6 +150,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
       let prevMenuElement = menuRefs[i - 1]?.current;
 
       if (menuElement) {
+
         //Reset the menu to default position
         menuElement.style.transform = `translateX(0px)`;
 
@@ -140,13 +169,29 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
         if (i === menuRefs.length - 1) {
           updateMenuOverflow(menuRefs[i]);
         }
+
+
       }
     }
   }, []);
 
   const updateOpenMenus = (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => {
     setOpenMenus(prev => isOpen ? [...prev, menuRef] : prev.filter(ref => ref !== menuRef));
+
   };
+
+  const updateMenuMaxVerticalDist = (menuRef: React.RefObject<HTMLDivElement>) => {
+    const menuElement = menuRef.current;
+    const toolbarElement = toolbarRef.current;
+
+    if (menuElement && toolbarElement) {
+      const toolbarBottomEdge = toolbarElement.getBoundingClientRect().bottom;
+      const menuElementBottomEdge = menuElement.getBoundingClientRect().bottom;
+      if (menuElementBottomEdge - toolbarBottomEdge > menuMaxVerticalDist){
+        setMenuMaxVerticalDist(menuElementBottomEdge - toolbarBottomEdge);
+      }
+    }
+  }
 
   const updateMenuOverflow = (menuRef: React.RefObject<HTMLDivElement>) => {
     const menuElement = menuRef.current;
@@ -156,8 +201,17 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
       const menuRightEdge = Math.round(menuElement.getBoundingClientRect().right);
       const toolbarRightEdge = Math.round(toolbarElement.getBoundingClientRect().right);
       setMenuOverflow(menuRightEdge - toolbarRightEdge);
+
     }
   }
+
+  const handleGrabToolbar = () => {
+    setIsGrabbing(true);
+  };
+
+  const handleReleaseToolbar = () => {
+    setIsGrabbing(false);
+  };
 
   const handleDirectionToggle = () => {
     setToolbarDirection(toolbarDirection === "vertical" ? "horizontal" : "vertical");
@@ -206,6 +260,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
     if (clickedOption.id === 'save'){
       onMenuAction('saveCanvas');
     }
+    if (clickedOption.id === 'hide'){
+      onMenuAction('hideApp')
+    }
 
     const isSelected = selectedOptions[clickedOption.category] === clickedOption.id;
     const currentlySelected = selectedOptions[clickedOption.category];
@@ -234,7 +291,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
   useEffect(() => {
     calculateMenuPositions(sortMenuRefs(openMenus));
     fitToBounds(sortMenuRefs(openMenus));
-  }, [toolbarPosition, openMenus, menuOverflow]);
+  }, [toolbarPosition, openMenus, menuOverflow, menuMaxVerticalDist]);
 
   return (
     <Draggable
@@ -246,6 +303,15 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
       onStop={handleDrag}
     >
       <div ref={toolbarRef} className={`toolbar ${toolbarDirection} ${isVisibile ? "" : "invisible"}`}>
+        <div
+          className={`grab ${isGrabbing ? 'grabbing' : ''}`}
+          onMouseDown={handleGrabToolbar}
+          onMouseUp={handleReleaseToolbar}
+        >
+          <div className="grab-dash" />
+          <div className="grab-dash" />
+          <div className="grab-dash" />
+        </div>
         {categories.map((category, categoryIndex) => (
           <React.Fragment key={categoryIndex}>
             {categoryIndex > 0 && <div className="separator" />}
@@ -269,6 +335,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
                     onMenuAction={handleOnMenuAction}
                     updateOpenMenus={updateOpenMenus}
                     updateMenuOverflow={updateMenuOverflow}
+                    updateMenuMaxVerticalDist={updateMenuMaxVerticalDist}
                     toggleDirection={handleDirectionToggle}
                   />
                 )

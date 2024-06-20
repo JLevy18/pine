@@ -30,6 +30,11 @@ let tray: Tray | null = null;
 
 let mainWindow: BrowserWindow | null = null;
 
+ipcMain.on('hide-app', async (event, arg) => {
+  mainWindow?.hide();
+});
+
+
 ipcMain.on('capture-screenshot', async (event, arg) => {
   const screenShotInfo = await captureScreen();
   if (screenShotInfo) {
@@ -103,11 +108,11 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     show: false,
     resizable: false,
-    skipTaskbar: true,
+    skipTaskbar: false,
     transparent: true,
     x: 0,
     y: 400,
-    titleBarStyle: 'hidden', // Change to hidden for prod
+    titleBarStyle: 'default', // Change to hidden for prod
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
@@ -149,11 +154,11 @@ const createWindow = async () => {
     tray.setToolTip('Pine');
 
     // Main window
-    mainWindow.maximize();
+    //mainWindow.maximize();
     mainWindow.setResizable(false);
 
     // Hotkeys
-    globalShortcut.register('Ctrl+Shift+P', () => {
+    globalShortcut.register('Ctrl+Alt+P', () => {
       if (mainWindow?.isVisible()) {
         mainWindow.hide();
       } else {

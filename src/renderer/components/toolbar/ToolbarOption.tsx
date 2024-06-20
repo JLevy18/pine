@@ -18,6 +18,7 @@ interface ToolbarOptionProps {
   toggleDirection: () => void;
   updateOpenMenus: (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => void;
   updateMenuOverflow: (menuRef: React.RefObject<HTMLDivElement>) => void;
+  updateMenuMaxVerticalDist: (menuRef: React.RefObject<HTMLDivElement>) => void;
 }
 
 const ToolbarOption: React.FC<ToolbarOptionProps> = ({
@@ -31,6 +32,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   toggleDirection,
   updateOpenMenus,
   updateMenuOverflow,
+  updateMenuMaxVerticalDist
 }) => {
 
   const [showMenu, setShowMenu] = useState(false);
@@ -78,6 +80,7 @@ const ToolbarOption: React.FC<ToolbarOptionProps> = ({
   useEffect(() => {
     if (showMenu) {
       updateMenuOverflow(menuRef);
+      updateMenuMaxVerticalDist(menuRef);
     }
   }, [showMenu])
 

@@ -65,6 +65,22 @@
             @apply bg-red-800
         }
 
+    .grab {
+      @apply flex mx-1
+    }
+
+    .grab-dash {
+      @apply h-5 w-[0.05rem] bg-neutral-500 mx-[0.1rem]
+    }
+
+    .grab:hover {
+      @apply cursor-grab
+    }
+
+    .grabbing:hover {
+      @apply cursor-grabbing
+    }
+
     /* Toolbar Menus */
 
     .menu-container {
@@ -82,7 +98,7 @@
     .horizontal .menu-container {
         @apply
 
-        top-full left-0 my-2.5
+        left-0 my-2.5
     }
 
     .color-option {

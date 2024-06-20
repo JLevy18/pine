@@ -274,6 +274,9 @@ const App: React.FC = () => {
         console.log(history)
         history.redo(canvas)
       }
+    },
+    hideApp: () => {
+      window.electron.ipcRenderer.sendMessage('hide-app');
     }
   };
 

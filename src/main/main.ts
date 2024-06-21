@@ -151,8 +151,13 @@ const createWindow = async () => {
           },
         },
       ]);
-      tray.setContextMenu(contextMenu);
+
       tray.setToolTip('Pine');
+      tray.setContextMenu(contextMenu);
+
+      // Hack to fix buggy context menu on startup
+      tray.popUpContextMenu();
+      tray.closeContextMenu();
     }
 
     // Main window
@@ -211,7 +216,6 @@ const createWindow = async () => {
 /**
  * Add event listeners...
  */
-
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even

@@ -45,7 +45,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
 
   const [openMenus, setOpenMenus] = useState<React.RefObject<HTMLDivElement>[]>([]);
   const [menuOverflow, setMenuOverflow] = useState<number>(0);
-  const [menuMaxVerticalDist, setMenuMaxVerticalDist] = useState<number>(0);
+  const [menuMaxHeight, updateMenuMaxHeight] = useState<number>(0);
   const [toolbarDirection, setToolbarDirection] = useState("horizontal");
   const [toolbarPosition, setToolbarPosition] = useState<Position>({ x: 0, y: 0 });
 
@@ -128,8 +128,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
       menuRefs.forEach(menuRef => {
         const menuElement = menuRef.current;
         if (menuElement) {
-          //console.log(toolbarRect.bottom + (menuRect.bottom - toolbarRect.bottom))
-          if (window.innerHeight < toolbarRect.bottom + (menuMaxVerticalDist)) {
+          if (window.innerHeight < toolbarRect.bottom + (menuMaxHeight)) {
             menuElement.style.top = "";
             menuElement.style.bottom = "100%";
           } else {
@@ -177,18 +176,16 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
 
   const updateOpenMenus = (menuRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => {
     setOpenMenus(prev => isOpen ? [...prev, menuRef] : prev.filter(ref => ref !== menuRef));
-
   };
 
-  const updateMenuMaxVerticalDist = (menuRef: React.RefObject<HTMLDivElement>) => {
+  const handleUpdateMenuMaxHeight = (menuRef: React.RefObject<HTMLDivElement>) => {
     const menuElement = menuRef.current;
     const toolbarElement = toolbarRef.current;
 
     if (menuElement && toolbarElement) {
-      const toolbarBottomEdge = toolbarElement.getBoundingClientRect().bottom;
-      const menuElementBottomEdge = menuElement.getBoundingClientRect().bottom;
-      if (menuElementBottomEdge - toolbarBottomEdge > menuMaxVerticalDist){
-        setMenuMaxVerticalDist(menuElementBottomEdge - toolbarBottomEdge);
+      const menuHeight = menuElement.getBoundingClientRect().height + MENU_GAP;
+      if (menuHeight > menuMaxHeight){
+        updateMenuMaxHeight(menuHeight);
       }
     }
   }
@@ -289,9 +286,15 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
 
   // Recalculate menu positions when openMenus changes
   useEffect(() => {
+
+    // Reset if all menus close max height
+    if (openMenus.length === 0) {
+      updateMenuMaxHeight(0);
+    }
+
     calculateMenuPositions(sortMenuRefs(openMenus));
     fitToBounds(sortMenuRefs(openMenus));
-  }, [toolbarPosition, openMenus, menuOverflow, menuMaxVerticalDist]);
+  }, [toolbarPosition, openMenus, menuOverflow, menuMaxHeight]);
 
   return (
     <Draggable
@@ -335,7 +338,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onMenuAction, isVisibile }) => {
                     onMenuAction={handleOnMenuAction}
                     updateOpenMenus={updateOpenMenus}
                     updateMenuOverflow={updateMenuOverflow}
-                    updateMenuMaxVerticalDist={updateMenuMaxVerticalDist}
+                    updateMenuMaxHeight={handleUpdateMenuMaxHeight}
                     toggleDirection={handleDirectionToggle}
                   />
                 )

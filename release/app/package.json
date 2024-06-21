@@ -1,12 +1,12 @@
 {
-  "name": "electron-react-boilerplate",
-  "version": "4.6.0",
-  "description": "A foundation for scalable desktop apps",
+  "name": "pine",
+  "version": "1.0.0",
+  "description": "An on screen annotation app",
   "license": "MIT",
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://github.com/electron-react-boilerplate"
+    "name": "Justin Levy",
+    "email": "contact@levthedev.com",
+    "url": "http://levthedev.com"
   },
   "main": "./dist/main/main.js",
   "scripts": {

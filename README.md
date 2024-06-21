@@ -8,3 +8,12 @@
 
 ## Installation (Windows Only)
 - The Installer binary can be found [here](https://github.com/JLevy18/pine/releases)
+
+## Upcoming Features
+- Improved Color Selection
+- Images/Emojis/Shapes for the canvas
+- Automatically start Pine on PC startup
+
+## Contributions
+Join my [Discord!](https://discord.gg/tA8U3KFGyK)
+I am open to pull requests, message me on Discord for a quick discussion on the change :D

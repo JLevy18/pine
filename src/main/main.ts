@@ -102,7 +102,15 @@ ipcMain.handle('get-settings', async (): Promise<Settings> => {
 });
 
 ipcMain.handle('put-settings', async (_event, settings: Settings): Promise<void> => {
+  globalShortcut.unregister(togglePine);
   togglePine = settings.hotkeys.togglePine;
+  globalShortcut.register(togglePine, () => {
+    if (mainWindow?.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow?.show();
+    }
+  });
   return writeSettings(settings);
 });
 

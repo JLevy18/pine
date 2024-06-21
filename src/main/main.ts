@@ -237,6 +237,9 @@ const createWindow = async () => {
       tray.setToolTip('Pine');
       tray.setContextMenu(contextMenu);
 
+      // Hack to fix buggy context menu on startup
+      tray.popUpContextMenu();
+      tray.closeContextMenu();
     }
 
     // Main window

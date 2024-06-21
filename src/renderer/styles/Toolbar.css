@@ -125,6 +125,10 @@
         @apply mx-1 w-5 h-5 hover:cursor-pointer
     }
 
+    .hotkey-invalid {
+      @apply bg-red-500 border-none
+    }
+
 
 
 }

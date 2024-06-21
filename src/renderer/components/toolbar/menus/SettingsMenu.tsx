@@ -16,6 +16,7 @@ const SettingsMenu = forwardRef<HTMLDivElement, SettingsMenuProps>(({ id, toggle
   const [recording, setRecording] = useState(false);
   const [keysPressed, setKeysPressed] = useState<string[]>([]);
   const [previousKey, setPreviousKey] = useState<string>("Ctrl+Alt+P");
+  const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
 
   const sortKeys = (keys: string[]) => {
     return keys.sort((a, b) => {
@@ -65,6 +66,24 @@ const SettingsMenu = forwardRef<HTMLDivElement, SettingsMenuProps>(({ id, toggle
     }
   }
 
+  const applyTemporaryStyles = (element: HTMLElement | null, response: string, temporaryText: string | null) => {
+    if (element){
+      if (response === "OK"){
+        element.classList.add("hotkey-bound");
+        setTimeout(() => {
+            element.classList.remove("hotkey-bound");
+        }, 500); // Duration to keep the invalid styles
+      } else {
+        setTemporaryMessage(temporaryText);
+        element.classList.add("hotkey-invalid");
+        setTimeout(() => {
+            element.classList.remove("hotkey-invalid");
+            setTemporaryMessage(null);
+        }, 500); // Duration to keep the invalid styles
+      }
+    }
+  };
+
   // Add and remove keydown event listener for recording keystrokes
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -89,6 +108,7 @@ const SettingsMenu = forwardRef<HTMLDivElement, SettingsMenuProps>(({ id, toggle
         const sortedKeys = sortKeys(keysPressed);
         const hotkey = sortedKeys.join("+");
 
+        const element = document.getElementById("toggle-pine-binding");
 
         if (!isModifierOnly && !HOTKEY_BLACKLIST.includes(hotkey)) {
           try {
@@ -99,9 +119,11 @@ const SettingsMenu = forwardRef<HTMLDivElement, SettingsMenuProps>(({ id, toggle
           } catch (error) {
             setTogglePineKey(previousKey);
             console.error("Failed to update settings.json:", error);
+            applyTemporaryStyles(element, "Code: 500", "Error");
           }
         } else {
           setTogglePineKey(previousKey);
+          applyTemporaryStyles(element, "Code: 400", "Invalid");
         }
 
         stopRecording();
@@ -147,10 +169,10 @@ const SettingsMenu = forwardRef<HTMLDivElement, SettingsMenuProps>(({ id, toggle
         </div>
         <div
           id="toggle-pine-binding"
-          className="text-neutral-300 text-xs text-center font-bold mx-2 min-w-20 border border-neutral-400 px-1 py-0.5 rounded hover:cursor-pointer"
+          className="text-neutral-300 text-xs text-center font-bold mx-2 min-w-20 border border-neutral-400 px-1 py-0.5 rounded hover:cursor-pointer transition-all ease-in-out"
           onClick={startRecording}
         >
-          {togglePineKey}
+          {temporaryMessage  || togglePineKey}
         </div>
         <div onClick={resetHotkey} className="text-xs font-semibold bg-blue-600 py-1 px-2.5 rounded-xl hover:cursor-pointer hover:bg-blue-700 transition-all ease-in-out">
           Reset

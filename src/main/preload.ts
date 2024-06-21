@@ -1,6 +1,7 @@
 // Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import { Settings } from '../renderer/settings';
 
 export type Channels = 'capture-screenshot' |
                          'screenshot-saved' |
@@ -8,7 +9,9 @@ export type Channels = 'capture-screenshot' |
                               'undo-canvas' |
                               'redo-canvas' |
                               'save-canvas' |
-                              'hide-app';
+                                 'hide-app' |
+                      'start-record-hotkey' |
+                       'stop-record-hotkey';
 
 const electronHandler = {
   ipcRenderer: {
@@ -26,10 +29,11 @@ const electronHandler = {
     },
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
-    }
+    },
+    getSettings: (): Promise<Settings> => ipcRenderer.invoke('get-settings'),
+    putSettings: (settings: Settings): Promise<void> => ipcRenderer.invoke('put-settings', settings)
   },
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
-
 export type ElectronHandler = typeof electronHandler;

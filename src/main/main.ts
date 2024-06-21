@@ -17,6 +17,7 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import icon from '../../assets/icon.svg';
+import { Settings } from '../renderer/settings';
 
 class AppUpdater {
   constructor() {
@@ -27,13 +28,91 @@ class AppUpdater {
 }
 
 let tray: Tray | null = null;
-
+let togglePine: string;
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('hide-app', async (event, arg) => {
   mainWindow?.hide();
 });
 
+const readSettings = (): Promise<Settings> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const settingsPath = getAssetPath("settings.json");
+      if (!fs.existsSync(settingsPath)) {
+        const defaultSettings = {
+          hotkeys: {
+            togglePine: 'Ctrl+Alt+P'
+          }
+        };
+        fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+        resolve(defaultSettings);
+      } else {
+        const settings = fs.readFileSync(settingsPath, 'utf-8');
+        resolve(JSON.parse(settings));
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+const registerHotkeys = () => {
+  if (togglePine) {
+    globalShortcut.register(togglePine, () => {
+      if (mainWindow?.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow?.show();
+      }
+    });
+  }
+
+  globalShortcut.register('Ctrl+Z', () => {
+    mainWindow?.webContents.send('undo-canvas');
+  });
+
+  globalShortcut.register('Ctrl+Y', () => {
+    mainWindow?.webContents.send('redo-canvas');
+  });
+
+  globalShortcut.register('Ctrl+S', () => {
+    mainWindow?.webContents.send('save-canvas');
+  });
+}
+
+const unregisterHotkeys = () => {
+  globalShortcut.unregisterAll();
+}
+
+const writeSettings = (settings: Settings): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const settingsPath = getAssetPath("settings.json");
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+ipcMain.handle('get-settings', async (): Promise<Settings> => {
+  return readSettings();
+});
+
+ipcMain.handle('put-settings', async (_event, settings: Settings): Promise<void> => {
+  togglePine = settings.hotkeys.togglePine;
+  return writeSettings(settings);
+});
+
+ipcMain.on('start-record-hotkey', () => {
+  unregisterHotkeys();
+})
+
+ipcMain.on('stop-record-hotkey', () => {
+  registerHotkeys();
+})
 
 ipcMain.on('capture-screenshot', async (event, arg) => {
   const screenShotInfo = await captureScreen();
@@ -60,6 +139,9 @@ ipcMain.on('capture-screenshot', async (event, arg) => {
           event.sender.send('screenshot-saved', 'File saved successfully');
         }
       });
+    } else {
+      // User canceled the save dialog
+      event.sender.send('screenshot-save-error', 'User canceled save');
     }
   } else {
     event.sender.send('screenshot-save-error', 'Failed to save file');
@@ -92,18 +174,18 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+const RESOURCES_PATH = app.isPackaged
+? path.join(process.resourcesPath, 'assets')
+: path.join(__dirname, '../../assets');
+
+const getAssetPath = (...paths: string[]): string => {
+return path.join(RESOURCES_PATH, ...paths);
+};
+
 const createWindow = async () => {
   if (isDebug) {
     await installExtensions();
   }
-
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
 
   mainWindow = new BrowserWindow({
     show: false,
@@ -123,7 +205,7 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
-  mainWindow.on('ready-to-show', () => {
+  mainWindow.on('ready-to-show', async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
@@ -155,9 +237,6 @@ const createWindow = async () => {
       tray.setToolTip('Pine');
       tray.setContextMenu(contextMenu);
 
-      // Hack to fix buggy context menu on startup
-      tray.popUpContextMenu();
-      tray.closeContextMenu();
     }
 
     // Main window
@@ -165,13 +244,19 @@ const createWindow = async () => {
     mainWindow.setResizable(false);
 
     // Hotkeys
-    globalShortcut.register('Ctrl+Alt+P', () => {
-      if (mainWindow?.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow?.show();
-      }
-    })
+    try {
+      const settings = await readSettings();
+      togglePine = settings.hotkeys.togglePine;
+      globalShortcut.register(togglePine, () => {
+        if (mainWindow?.isVisible()) {
+          mainWindow.hide();
+        } else {
+          mainWindow?.show();
+        }
+      });
+    } catch (error) {
+      console.error('Failed to read settings:', error);
+    }
 
   });
 

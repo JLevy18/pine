@@ -249,11 +249,7 @@ const App: React.FC = () => {
         const handleScreenshotResponse = (...args: unknown[]) => {
           const [event, arg] = args as [IpcRendererEvent, string];
           setToolbarVisibility(true); // Show the toolbar again
-          if (arg === 'screenshot-saved') {
-            console.log('Screenshot was saved successfully.');
-          } else {
-            console.error('Error saving screenshot:', event);
-          }
+          console.log("screenshot response: ", event)
         };
 
         // Attach the response handlers

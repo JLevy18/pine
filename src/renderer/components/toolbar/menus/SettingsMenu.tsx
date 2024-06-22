@@ -9,7 +9,7 @@ interface SettingsMenuProps {
 const SettingsMenu = forwardRef<HTMLDivElement, SettingsMenuProps>(({ id, toggleDirection }, ref) => {
 
   const DEFAULT_TOGGLE_PINE_KEY = "Ctrl+Alt+P";
-  const HOTKEY_BLACKLIST = ["Ctrl+S", "Ctrl+Z", "Ctrl+Y"];
+  const HOTKEY_BLACKLIST = ["Ctrl+S", "Ctrl+Z", "Ctrl+Y", "Ctrl+C", "Ctrl+V", "Ctrl+A"];
   const MODIFIER_PRIORITY = ["Ctrl", "Shift", "Alt"];
 
   const [togglePineKey, setTogglePineKey] = useState(DEFAULT_TOGGLE_PINE_KEY);
